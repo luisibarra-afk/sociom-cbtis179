@@ -142,7 +142,7 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
   border-bottom:1px solid rgba(61,0,128,.8);
   background:rgba(7,0,26,.85);
   backdrop-filter:blur(14px);
-  position:sticky;top:0;z-index:40;
+  
 }
 .brand{
   font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;
@@ -310,7 +310,7 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
   display:flex;align-items:center;gap:10px;padding:14px 18px;
   background:rgba(7,0,26,.88);backdrop-filter:blur(14px);
   border-bottom:1px solid rgba(61,0,128,.6);
-  position:sticky;top:0;z-index:30;
+  
 }
 .close-x{
   width:38px;height:38px;border-radius:10px;
@@ -1354,52 +1354,6 @@ const BLOQUES = [
   ]
 },
 
-{
-  semana:16, titulo:'Poder, medio ambiente y resistencia', temaIdx:3,
-  preguntas:[
-    { tipo:'situacion',
-      escenario:'Una empresa minera contamina el río de una comunidad indígena. El gobierno dice que el proyecto cumple con la ley. La comunidad dice que nadie les preguntó y que el río es su sustento. Llevan años en juicio.',
-      q:'¿Qué tensión de poder ilustra este conflicto?',
-      opts:['Es un problema legal que los jueces deben resolver', 'La empresa solo está siguiendo las reglas del mercado', 'La comunidad debería aceptar la compensación económica ofrecida', 'El conflicto muestra cómo el poder económico y el Estado se alían para definir qué es "legal" y qué es "desarrollo" — mientras la comunidad, sin ese poder, lucha por defender lo que para ella es vida y derecho'], correct:3, explain:'Este tipo de conflicto socioambiental es un conflicto de poder: quién decide qué se extrae, de dónde y a qué costo para quién. Que algo sea legal no lo hace justo — especialmente cuando las leyes las hacen quienes tienen poder y afectan a quienes no lo tienen.',
-      selLink:'Ver los conflictos ambientales como conflictos de poder — no solo problemas técnicos — es el análisis que propone el Ámbito 4 y toda la materia de CS2.' },
-    { tipo:'situacion',
-      escenario:'El cambio climático afecta más a países pobres del sur global aunque han emitido mucho menos carbono que los países industrializados del norte. Las comunidades más afectadas son las que menos han contribuido al problema.',
-      q:'¿Qué concepto describe esta distribución desigual de las consecuencias ambientales?',
-      opts:['Justicia climática: la injusticia de que quienes menos han causado el problema son quienes más sufren sus consecuencias — eso es una expresión global de las relaciones de poder entre naciones ricas y pobres', 'Es solo mala geografía — algunos países están en zonas más vulnerables', 'El clima afecta igual a todos los países del mundo', 'Los países pobres deben adaptarse — es su responsabilidad'], correct:0, explain:'La justicia climática nombra la contradicción: los países que más emitieron CO₂ históricamente tienen más recursos para adaptarse; los que emitieron menos, sufren más y tienen menos capacidad de respuesta. Es desigualdad global expresada en términos ambientales.',
-      selLink:'Conectar las relaciones de poder globales con los efectos ambientales locales es el tipo de análisis crítico que cierra este semestre de CS2.' },
-    { tipo:'concepto',
-      q:'¿Qué es el "extractivismo" y por qué genera conflictos socioambientales?',
-      opts:['La exportación de productos agrícolas a otros países', 'Un modelo económico que basa el crecimiento en la extracción intensiva de recursos naturales — genera conflictos porque los beneficios económicos se concentran en pocas manos o se exportan, mientras el daño ambiental y social lo pagan las comunidades locales', 'La técnica para extraer minerales con maquinaria pesada', 'Un modelo solo aplicable a países petroleros'], correct:1, explain:'El extractivismo no es solo minería: incluye petróleo, agua, tierras agrícolas y bosques. El patrón es siempre similar: alguien con capital y poder político extrae, los beneficios salen de la comunidad, y el daño ambiental queda. Eso explica por qué genera tanta resistencia organizada.',
-      selLink:'Entender el extractivismo conecta los temas de producción, poder y medio ambiente que hemos trabajado a lo largo del semestre.' },
-    { tipo:'situacion',
-      escenario:'Un grupo de jóvenes de tu plantel decide hacer una campaña sobre el agua en su comunidad: investigan, hacen carteles, hablan con vecinos y piden una reunión con el ayuntamiento. Algunos maestros los apoyan; otros dicen que "no es su papel meterse en eso".',
-      q:'¿Por qué los maestros que los apoyan tienen razón desde el punto de vista de la ciudadanía activa?',
-      opts:['Es peligroso meterse en temas políticos siendo tan jóvenes', 'Porque la ciudadanía activa se aprende haciendo: investigar, comunicar y dialogar con instituciones sobre un problema real es exactamente el ejercicio que forma jóvenes críticos y participativos — no solo estudiantes que memorizan contenidos', 'Los jóvenes deberían enfocarse en sus calificaciones', 'Porque la escuela debe apoyar todo lo que hagan los estudiantes'], correct:1, explain:'La ciudadanía no se aprende de memoria — se practica. Un plantel que permite y apoya que sus estudiantes investiguen, opinen y dialoguen con instituciones está formando exactamente el tipo de ciudadanía crítica y activa que la NEM y los ámbitos socioemocionales proponen.',
-      selLink:'Esta situación conecta todos los ámbitos: salud (agua), ciudadanía (organización), género (quién participa) y poder (quién decide). Eso es Ciencias Sociales II integrada.' },
-    { tipo:'situacion',
-      escenario:'Al terminar el semestre, tu maestra te pregunta: "¿Para qué te sirvió aprender esto?" Tú piensas en Karla que llega sin desayunar, en el tequio de San Pedro, en los jornaleros del aguacate y en la minera del río.',
-      q:'¿Qué conecta todos esos casos que viste durante el semestre?',
-      opts:['El gobierno debería resolver todos esos problemas', 'Todos muestran cómo las relaciones de poder, la organización social y la distribución desigual de recursos condicionan la vida cotidiana de personas reales — y cómo entenderlos es el primer paso para actuar con más consciencia y ciudadanía', 'Son problemas distintos sin relación entre sí', 'Son ejemplos tristes que solo sirven para el examen'], correct:1, explain:'¡Exactamente! CS2 no es una colección de temas aislados: es un marco para entender cómo el poder, la economía y la organización social se conectan con la vida de personas reales. Esa conexión — entre lo estructural y lo cotidiano — es la habilidad más importante que te llevas.',
-      selLink:'Este es el cierre del semestre: conectar todos los ámbitos, todos los temas y todas las situaciones en una visión integrada de la realidad social.' },
-    { tipo:'concepto',
-      q:'¿Qué significa "pensamiento crítico" aplicado a las Ciencias Sociales?',
-      opts:['Memorizar los autores y teorías más importantes del campo', 'La capacidad de analizar situaciones sociales identificando quién tiene poder, quién lo ejerce y sobre quién, qué intereses están en juego y qué estructuras reproducen la desigualdad — para poder actuar con más información y ciudadanía', 'Saber detectar noticias falsas en internet', 'Criticar todo lo que dice el gobierno o los medios'], correct:1, explain:'El pensamiento crítico en CS2 no es desconfianza de todo ni memorización de teorías. Es la capacidad de ver detrás de lo que parece natural, identificar relaciones de poder y estructuras, y actuar con esa información. Esa es la herramienta más duradera de este semestre.',
-      selLink:'Este es el propósito final de combinar Ciencias Sociales II con los ámbitos socioemocionales: formarte como bachiller que piensa, dialoga y actúa críticamente en el mundo.' },
-  ]
-},
-
-]; // fin BLOQUES
-
-
-/* ══ SISTEMA DE RANGOS ══ */
-const RANGOS = [
-  { min:0,    max:59,   nombre:'Observador/a',    ico:'👀', color:'#9966cc' },
-  { min:60,   max:179,  nombre:'Estudiante',       ico:'📖', color:'#00cfff' },
-  { min:180,  max:359,  nombre:'Analista',         ico:'🔍', color:'#00f5ff' },
-  { min:360,  max:539,  nombre:'Pensador/a Crítico/a', ico:'💡', color:'#ffe600' },
-  { min:540,  max:719,  nombre:'Sociólogo/a',      ico:'🌐', color:'#ff8c00' },
-  { min:720,  max:899,  nombre:'Crítico/a Social', ico:'⚡', color:'#ff00cc' },
-  { min:900,  max:9999, nombre:'Orgullo DGETI',    ico:'🎓', color:'#00ffcc' },
 ];
 
 function getRango(xp){
