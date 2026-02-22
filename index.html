@@ -64,7 +64,6 @@ body::after{
 
 .screen{display:none;min-height:100vh;flex-direction:column;}
 .screen.active{display:flex;}
-.screen.active{display:flex;}
 canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9997;}
 
 /* ─── BADGE OVERLAY ─── */
@@ -138,6 +137,7 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
 /* ─── HOME HEADER ─── */
 #home{background:transparent;}
 .home-header{
+  position:fixed;top:0;left:0;right:0;z-index:100;
   display:flex;justify-content:space-between;align-items:center;
   padding:14px 18px;
   border-bottom:1px solid rgba(61,0,128,.8);
@@ -475,7 +475,13 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
 .nav-item.active{color:var(--cyan);text-shadow:0 0 10px var(--cyan);}
 
 /* ─── MI AVANCE ─── */
-#avancePanel{display:none;padding:16px 16px 100px;flex-direction:column;gap:14px;}
+#avancePanel{
+  display:none;
+  position:fixed;top:80px;bottom:75px;left:0;right:0;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:16px 16px 16px;
+  flex-direction:column;gap:14px;
+}
 #avancePanel.show{display:flex;}
 .av-card{
   background:rgba(22,0,61,.45);border:1px solid var(--border);
@@ -785,6 +791,15 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
 <script>
 /* ══ AUDIO ══ */
 let AC;
+// iOS audio unlock on first touch
+document.addEventListener('touchstart', function iosAudioUnlock(){
+  try{
+    const ac = new (window.AudioContext||window.webkitAudioContext)();
+    ac.resume().then(()=>{ ac.close(); });
+  }catch(e){}
+  document.removeEventListener('touchstart', iosAudioUnlock);
+}, {once:true});
+
 function getAC(){if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();return AC;}
 function pt(f,tp='sine',d=.18,v=.25,dl=0){try{const ac=getAC(),o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.type=tp;o.frequency.value=f;const t=ac.currentTime+dl;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+d);o.start(t);o.stop(t+d+.01);}catch(e){}}
 function pc(fs,tp='sine',d=.3,v=.18){fs.forEach((f,i)=>pt(f,tp,d,v,i*.04));}
