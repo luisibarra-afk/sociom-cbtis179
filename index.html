@@ -1844,24 +1844,24 @@ function launchConfetti(){
 
 /* ══ SUPABASE CONFIG ══ */
 const SB_URL = 'https://alajpjhhkehhrksawdqb.supabase.co';
-const SB_KEY = 'sb_publishable_ii1xtkAo_3ZqHDejHrq1mg_wjAO4eMj';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsYWpwamhoa2VoaHJrc2F3ZHFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3MjQwNjQsImV4cCI6MjA4NzMwMDA2NH0.C55xSZTJ7EQE5NBbf9QopwZo4f44rbh1ZgOcSRdfN2k';
 
 async function sbFetch(path, opts={}){
   try{
+    // Put apikey FIRST before any other params
+    const hasQ = path.includes('?');
+    const base = path.split('?')[0];
+    const rest = hasQ ? '&'+path.split('?')[1] : '';
+    const url = SB_URL+'/rest/v1/'+base+'?apikey='+SB_KEY+rest;
     const headers = {
       'Content-Type': 'application/json',
-      'Prefer': opts.prefer||'return=minimal'
+      'Prefer': opts.prefer||'return=minimal',
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer '+SB_KEY
     };
-    // Support both old (eyJ) and new (sb_) key formats
-    if(SB_KEY.startsWith('sb_')){
-      headers['Authorization'] = 'Bearer '+SB_KEY;
-    } else {
-      headers['apikey'] = SB_KEY;
-      headers['Authorization'] = 'Bearer '+SB_KEY;
-    }
-    const res = await fetch(SB_URL+'/rest/v1/'+path, {
-      headers, ...opts
-    });
+    const fetchOpts = {...opts, headers};
+    delete fetchOpts.prefer;
+    const res = await fetch(url, fetchOpts);
     if(!res.ok){
       const errText = await res.text();
       console.error('Supabase error:', res.status, errText);
