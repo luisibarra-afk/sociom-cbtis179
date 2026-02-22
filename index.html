@@ -2,6 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="author" content="Luis Eduardo Ibarra Hernández">
+<meta name="copyright" content="© 2026 Luis Eduardo Ibarra Hernández - CBTis 179 - DGETI">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SocioMente — Ciencias Sociales II</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Nunito+Sans:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -515,6 +517,13 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
 .av-badge-locked .abli{font-size:36px;display:block;margin-bottom:4px;}
 .av-badge-locked .ablt{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;}
 
+
+.copyright{
+  font-family:'Share Tech Mono',monospace;
+  font-size:8px;color:var(--muted);
+  text-align:center;letter-spacing:1px;
+  padding:8px 0;opacity:.6;
+}
 /* ─── SPLASH SCREEN ─── */
 #splash{
   position:fixed;inset:0;z-index:9000;
@@ -648,17 +657,18 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
   </div>
 </div>
 
-<!-- ══ SPLASH ══ -->
-<div id="splash">
+<!-- SPLASH DESACTIVADO -->
+<div id="splash" style="display:none">
   <div class="splash-logo">🦉</div>
   <div class="splash-brand">SocioMente</div>
   <div class="splash-sub">Ciencias Sociales II</div>
   <div class="splash-school">CBTis 179 · DGETI · 2025–2026</div>
   <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+  <div class="copyright">© 2026 Luis Eduardo Ibarra Hernández · CBTis 179 · DGETI</div>
 </div>
 
 <!-- ══ LOGIN ══ -->
-<div class="screen" id="login">
+<div class="screen" id="login" style="display:none!important">
   <div class="login-header">
     <span class="login-owl">🦉</span>
     <div class="login-title">¡Bienvenido/a!</div>
@@ -676,13 +686,15 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
     <div class="login-hint">Los últimos 4 dígitos de tu número de control<br>Ej. si tu control termina en <strong style="color:var(--cyan)">0012</strong>, escribe <strong style="color:var(--cyan)">0012</strong></div>
     <button class="login-btn" id="loginBtn" onclick="doLogin()" disabled>INGRESAR →</button>
     <div class="login-error" id="loginError"></div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);text-align:center;margin-top:16px;letter-spacing:1px;border-top:1px solid rgba(61,0,128,.3);padding-top:12px;">© 2026 Luis Eduardo Ibarra Hernández<br>CBTis 179 · DGETI</div>
   </div>
   <div class="login-footer">Tu progreso se guarda automáticamente en este dispositivo</div>
+  <div class="copyright">© 2026 Luis Eduardo Ibarra Hernández · CBTis 179 · DGETI</div>
 </div>
 
 
 <!-- ══ HOME ══ -->
-<div class="screen" id="home">
+<div class="screen active" id="home">
   <div class="home-header">
     <div>
       <div class="brand">SocioMente 🌎</div>
@@ -1484,7 +1496,6 @@ function isUnlocked(semana){
   const unlock = UNLOCK_DATES[semana];
   if(!unlock) return false;
   const now = new Date();
-  // Compare only dates, not time
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   return today >= unlock;
 }
@@ -1582,9 +1593,13 @@ function renderAvance(){
   const pctCorr=totalQ>0?Math.round(totalCorr/totalQ*100):0;
   const temaStats=TEMAS.map((t,ti)=>{
     const blocks=BLOQUES.filter(b=>b.temaIdx===ti);
-    const doneT=blocks.filter(b=>STATE.blocksCompleted.includes(b.semana)).length;
+    const doneBlocks=blocks.filter(b=>STATE.blocksCompleted.includes(b.semana));
+    const doneT=doneBlocks.length;
+    // XP: count 10 per correct answer (6 per block) but use doneT*60 as estimate
+    // Better: sum actual XP from completed blocks
+    const xpT=doneT*60;
     const shortName=t.nombre.replace(/Tema \d+ — /,'');
-    return {t,doneT,total:blocks.length,xpT:doneT*60,shortName};
+    return {t,doneT,total:blocks.length,xpT,shortName};
   });
   const earnedBadges=BADGES.filter(b=>STATE.badges[b.id]);
 
@@ -1920,9 +1935,17 @@ async function cargarProgreso(matricula){
   if(data && data.length){
     const p = data[0];
     STATE.xp = p.xp||0;
-    STATE.blocksCompleted = p.bloques_completados||[];
+    // bloques_completados viene como array de strings desde Supabase - convertir a números
+    const raw = p.bloques_completados||[];
+    STATE.blocksCompleted = Array.isArray(raw) ? raw.map(x=>parseInt(x)).filter(x=>!isNaN(x)) : [];
     STATE.totalCorrect = p.total_correctas||0;
     STATE.totalWrong = p.total_incorrectas||0;
+    // Restaurar badges según bloques completados
+    if(STATE.blocksCompleted.includes(4))  STATE.badges.necesidades=true;
+    if(STATE.blocksCompleted.includes(8))  STATE.badges.organizacion=true;
+    if(STATE.blocksCompleted.includes(12)) STATE.badges.produccion=true;
+    if(STATE.blocksCompleted.includes(15)) STATE.badges.dgeti=true;
+    console.log('Progreso cargado: XP='+STATE.xp+' Bloques='+STATE.blocksCompleted);
     return true;
   }
   return false;
@@ -2030,15 +2053,25 @@ function showLogout(){
   if(!STATE.matricula) return;
   if(confirm('¿Cerrar sesión? Tu progreso está guardado.')){
     STATE.matricula=''; STATE.nombre=''; STATE.grupo='';
-    showScreen('login');
+    // Ocultar todas las pantallas
+    document.querySelectorAll('.screen').forEach(s=>{
+      s.classList.remove('active');
+      s.style.display='';
+    });
+    // Mostrar login
     const loginEl = document.getElementById('login');
-    if(loginEl) loginEl.classList.add('active');
+    loginEl.style.display='flex';
+    loginEl.classList.add('active');
+    // Limpiar campos
     const pinEl = document.getElementById('pinInput');
-    if(pinEl){ pinEl.value=''; }
+    if(pinEl) pinEl.value='';
     const btnEl = document.getElementById('loginBtn');
     if(btnEl) btnEl.disabled=true;
+    const errEl = document.getElementById('loginError');
+    if(errEl) errEl.textContent='';
     const chipEl = document.getElementById('userChip');
     if(chipEl) chipEl.textContent='👤 —';
+    window.scrollTo(0,0);
   }
 }
 
@@ -2084,3 +2117,4 @@ setTimeout(()=>{
 </script>
 </body>
 </html>
+
