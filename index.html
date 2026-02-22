@@ -1897,11 +1897,21 @@ async function guardarProgreso(){
     ultima_sesion: new Date().toISOString()
   };
   // Upsert — insert o update
-  await sbFetch('progreso', {
-    method:'POST',
-    prefer:'resolution=merge-duplicates,return=minimal',
-    body: JSON.stringify(payload)
-  });
+  // Check if record exists first
+  const exists = await sbFetch(`progreso?matricula=eq.${STATE.matricula}&select=matricula`);
+  if(exists && exists.length){
+    // UPDATE
+    await sbFetch(`progreso?matricula=eq.${STATE.matricula}`, {
+      method:'PATCH',
+      body: JSON.stringify(payload)
+    });
+  } else {
+    // INSERT
+    await sbFetch('progreso', {
+      method:'POST',
+      body: JSON.stringify(payload)
+    });
+  }
   saveState(); // también local
 }
 
@@ -2019,11 +2029,16 @@ function doLogin(){
 function showLogout(){
   if(!STATE.matricula) return;
   if(confirm('¿Cerrar sesión? Tu progreso está guardado.')){
-    STATE.matricula='';
+    STATE.matricula=''; STATE.nombre=''; STATE.grupo='';
     showScreen('login');
-    document.getElementById('login').classList.add('active');
-    document.getElementById('matriculaInput').value='';
-    document.getElementById('loginBtn').disabled=true;
+    const loginEl = document.getElementById('login');
+    if(loginEl) loginEl.classList.add('active');
+    const pinEl = document.getElementById('pinInput');
+    if(pinEl){ pinEl.value=''; }
+    const btnEl = document.getElementById('loginBtn');
+    if(btnEl) btnEl.disabled=true;
+    const chipEl = document.getElementById('userChip');
+    if(chipEl) chipEl.textContent='👤 —';
   }
 }
 
