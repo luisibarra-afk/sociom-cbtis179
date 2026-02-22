@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="author" content="Luis Eduardo Ibarra Hernández">
-<meta name="copyright" content="© 2026 Luis Eduardo Ibarra Hernández - CBTis 179 - DGETI">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SocioMente — Ciencias Sociales II</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Nunito+Sans:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -519,15 +518,10 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
 .av-badge-locked .ablt{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;}
 
 
-.copyright{
-  font-family:'Share Tech Mono',monospace;
-  font-size:8px;color:var(--muted);
-  text-align:center;letter-spacing:1px;
-  padding:8px 0;opacity:.6;
-}
+
 /* ─── SPLASH SCREEN ─── */
 #splash{
-  position:fixed;inset:0;z-index:9000;
+  position:fixed;inset:0;z-index:9999;
   background:var(--bg);
   display:flex;flex-direction:column;
   align-items:center;justify-content:center;
@@ -558,15 +552,16 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
   animation:fS .5s ease .7s both;
 }
 .splash-bar{
-  width:160px;height:3px;background:rgba(61,0,128,.3);
-  border-radius:999px;overflow:hidden;margin-top:8px;
+  width:220px;height:6px;background:rgba(61,0,128,.3);
+  border-radius:999px;overflow:hidden;margin-top:12px;
   animation:fS .3s ease .8s both;
+  border:1px solid rgba(61,0,128,.5);
 }
 .splash-bar-fill{
   height:100%;width:0%;
-  background:linear-gradient(90deg,var(--cyan),var(--magenta));
-  border-radius:999px;box-shadow:0 0 8px var(--cyan);
-  animation:loadBar 2s ease .9s forwards;
+  background:linear-gradient(90deg,var(--cyan),var(--magenta),var(--purple));
+  border-radius:999px;box-shadow:0 0 12px var(--cyan);
+  animation:loadBar 2.2s ease .9s forwards;
 }
 @keyframes loadBar{to{width:100%}}
 
@@ -660,13 +655,13 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
 </div>
 
 <!-- SPLASH DESACTIVADO -->
-<div id="splash" style="display:none">
+<div id="splash">
   <div class="splash-logo">🦉</div>
   <div class="splash-brand">SocioMente</div>
   <div class="splash-sub">Ciencias Sociales II</div>
   <div class="splash-school">CBTis 179 · DGETI · 2025–2026</div>
   <div class="splash-bar"><div class="splash-bar-fill"></div></div>
-  <div class="copyright">© 2026 Luis Eduardo Ibarra Hernández · CBTis 179 · DGETI</div>
+  
 </div>
 
 <!-- ══ LOGIN ══ -->
@@ -688,10 +683,11 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
     <div class="login-hint">Los últimos 4 dígitos de tu número de control<br>Ej. si tu control termina en <strong style="color:var(--cyan)">0012</strong>, escribe <strong style="color:var(--cyan)">0012</strong></div>
     <button class="login-btn" id="loginBtn" onclick="doLogin()" disabled>INGRESAR →</button>
     <div class="login-error" id="loginError"></div>
-    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);text-align:center;margin-top:16px;letter-spacing:1px;border-top:1px solid rgba(61,0,128,.3);padding-top:12px;">© 2026 Luis Eduardo Ibarra Hernández<br>CBTis 179 · DGETI</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,230,0,.55);text-align:center;margin-top:16px;letter-spacing:1px;border-top:1px solid rgba(255,230,0,.1);padding-top:12px;">© 2026 Luis Eduardo Ibarra Hernández · CBTis 179 · DGETI</div>
+    
   </div>
-  <div class="login-footer">Tu progreso se guarda automáticamente en este dispositivo</div>
-  <div class="copyright">© 2026 Luis Eduardo Ibarra Hernández · CBTis 179 · DGETI</div>
+  <div class="login-footer">Tu progreso se guarda en la nube — accede desde cualquier dispositivo con tu PIN</div>
+  
 </div>
 
 
@@ -1413,6 +1409,11 @@ function getRangoProgress(xp){
 
 /* ══ RENDER HOME ══ */
 function renderHome(){
+  // Si no hay usuario logueado, ir al login
+  if(!STATE.matricula){
+    showScreen('login');
+    return;
+  }
   const themes=TEMAS.map((t,ti)=>{
     const blocks=BLOQUES.filter(b=>b.temaIdx===ti);
     const done=blocks.filter(b=>STATE.blocksCompleted.includes(b.semana));
@@ -1942,20 +1943,24 @@ async function cargarProgreso(matricula){
   if(data && data.length){
     const p = data[0];
     STATE.xp = p.xp||0;
-    // bloques_completados viene como array de strings desde Supabase - convertir a números
     const raw = p.bloques_completados||[];
     STATE.blocksCompleted = Array.isArray(raw) ? raw.map(x=>parseInt(x)).filter(x=>!isNaN(x)) : [];
     STATE.totalCorrect = p.total_correctas||0;
     STATE.totalWrong = p.total_incorrectas||0;
-    // Restaurar badges según bloques completados
     if(STATE.blocksCompleted.includes(4))  STATE.badges.necesidades=true;
     if(STATE.blocksCompleted.includes(8))  STATE.badges.organizacion=true;
     if(STATE.blocksCompleted.includes(12)) STATE.badges.produccion=true;
     if(STATE.blocksCompleted.includes(15)) STATE.badges.dgeti=true;
-    console.log('Progreso cargado: XP='+STATE.xp+' Bloques='+STATE.blocksCompleted);
+    // Sincronizar localStorage con Supabase
+    saveState();
     return true;
+  } else {
+    // No hay progreso en Supabase — limpiar localStorage para este usuario
+    try{ localStorage.removeItem(STORAGE_KEY+matricula); }catch(e){}
+    STATE.xp=0; STATE.blocksCompleted=[]; STATE.totalCorrect=0; STATE.totalWrong=0;
+    STATE.badges={necesidades:false,organizacion:false,produccion:false,dgeti:false};
+    return false;
   }
-  return false;
 }
 
 /* ══ MATRÍCULA & STORAGE ══ */
@@ -2105,14 +2110,25 @@ const _lastMat = (()=>{
 })();
 
 // Siempre iniciar en login
+document.querySelectorAll('.screen').forEach(s=>{ s.style.display='none'; });
+
+// Animación de puntos
+let _dotCount = 0;
+const _dotsEl = document.getElementById('splashDots');
+const _dotsInterval = setInterval(()=>{
+  _dotCount = (_dotCount+1)%4;
+  if(_dotsEl) _dotsEl.textContent = '.'.repeat(_dotCount+1);
+}, 400);
+
 setTimeout(()=>{
+  clearInterval(_dotsInterval);
   const splash = document.getElementById('splash');
   splash.classList.add('fade');
   setTimeout(()=>{
     splash.style.display='none';
     showScreen('login');
-  }, 600);
-}, 2800);
+  }, 500);
+}, 2500);
 </script>
 </body>
 </html>
