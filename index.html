@@ -1877,7 +1877,7 @@ async function sbFetch(path, opts={}){
 
 async function buscarAlumno(matricula){
   // Use lowercase 'alumnos' table (text matricula column)
-  const data = await sbFetch(`Alumnos?matricula=eq.${matricula}&select=matricula,nombre,grupo`);
+  const data = await sbFetch(`"Alumnos"?matricula=eq.${matricula}&select=matricula,nombre,grupo`);
   console.log('buscarAlumno result:', data);
   return (data && data.length) ? data[0] : null;
 }
