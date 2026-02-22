@@ -137,7 +137,6 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
 /* ─── HOME HEADER ─── */
 #home{background:transparent;}
 .home-header{
-  position:fixed;top:0;left:0;right:0;z-index:100;
   display:flex;justify-content:space-between;align-items:center;
   padding:14px 18px;
   border-bottom:1px solid rgba(61,0,128,.8);
@@ -460,7 +459,7 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
 
 /* ─── BOTTOM NAV ─── */
 .bottom-nav{
-  position:fixed;bottom:0;left:0;right:0;
+  position:relative;
   background:rgba(7,0,26,.92);border-top:1px solid rgba(61,0,128,.7);
   display:flex;justify-content:space-around;padding:10px 0 20px;z-index:50;
   backdrop-filter:blur(18px);
@@ -475,13 +474,7 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
 .nav-item.active{color:var(--cyan);text-shadow:0 0 10px var(--cyan);}
 
 /* ─── MI AVANCE ─── */
-#avancePanel{
-  display:none;
-  position:fixed;top:80px;bottom:75px;left:0;right:0;
-  overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding:16px 16px 16px;
-  flex-direction:column;gap:14px;
-}
+#avancePanel{display:none;padding:16px 16px 100px;flex-direction:column;gap:14px;}
 #avancePanel.show{display:flex;}
 .av-card{
   background:rgba(22,0,61,.45);border:1px solid var(--border);
