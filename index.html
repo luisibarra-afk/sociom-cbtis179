@@ -1,1 +1,2075 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SocioMente — Ciencias Sociales II</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Nunito+Sans:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
+:root{
+  /* Paleta retrowave/vaporwave */
+  --cyan:#00f5ff;
+  --magenta:#ff00cc;
+  --purple:#9b00ff;
+  --pink:#ff2d78;
+  --orange:#ff8c00;
+  --yellow:#ffe600;
+  --green:#00ffcc;
+  --green-d:#00cc99;
+  --red:#ff3864;
+  --blue:#0ff;
+
+  /* Fondos */
+  --bg:#07001a;
+  --surface:#10002e;
+  --card:#16003d;
+  --border:#3d0080;
+  --text:#f0e6ff;
+  --muted:#7a55aa;
+}
+
+/* ─── BODY con grid retrowave ─── */
+body{
+  font-family:'Nunito Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+  -webkit-tap-highlight-color:transparent;
+  background-image:
+    linear-gradient(rgba(0,245,255,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,245,255,.035) 1px, transparent 1px);
+  background-size:30px 30px;
+  position:relative;
+}
+
+/* Scanlines overlay */
+body::after{
+  content:'';
+  position:fixed;
+  inset:0;
+  background:repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,.06) 3px,
+    rgba(0,0,0,.06) 4px
+  );
+  pointer-events:none;
+  z-index:9998;
+}
+
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9997;}
+
+/* ─── BADGE OVERLAY ─── */
+#badgeOverlay{
+  position:fixed;inset:0;
+  background:rgba(4,0,20,.95);
+  z-index:8000;display:none;
+  align-items:center;justify-content:center;
+  backdrop-filter:blur(12px);
+}
+#badgeOverlay.show{display:flex;}
+.badge-popup{
+  background:linear-gradient(145deg,#1a004a,#08001a);
+  border:1px solid var(--magenta);
+  border-radius:24px;padding:36px 28px;text-align:center;
+  max-width:320px;width:90%;
+  animation:popIn .5s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 0 60px rgba(255,0,204,.35),0 0 120px rgba(0,245,255,.15),inset 0 0 40px rgba(155,0,255,.08);
+}
+@keyframes popIn{from{transform:scale(.3)rotate(-12deg);opacity:0}to{transform:scale(1)rotate(0);opacity:1}}
+.badge-shine{
+  font-size:88px;
+  animation:bSpin .8s cubic-bezier(.34,1.56,.64,1) .1s both;
+  display:block;
+  filter:drop-shadow(0 0 20px var(--cyan)) drop-shadow(0 0 40px var(--magenta));
+}
+@keyframes bSpin{from{transform:scale(0)rotate(-30deg);opacity:0}to{transform:scale(1)rotate(0);opacity:1}}
+.badge-new{
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;letter-spacing:3px;
+  color:var(--cyan);text-transform:uppercase;
+  margin:14px 0 4px;
+  text-shadow:0 0 14px var(--cyan);
+}
+.badge-name{
+  font-family:'Nunito',sans-serif;font-size:24px;font-weight:900;margin-bottom:6px;
+  background:linear-gradient(90deg,var(--cyan),var(--magenta));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.badge-desc{font-size:13px;color:#b090d0;line-height:1.55;margin-bottom:22px;}
+.badge-close-btn{
+  background:linear-gradient(90deg,var(--magenta),var(--purple));
+  color:#fff;border:none;border-radius:12px;padding:14px 36px;
+  font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;
+  cursor:pointer;text-transform:uppercase;letter-spacing:1px;
+  box-shadow:0 0 24px rgba(255,0,204,.5);transition:all .2s;
+}
+.badge-close-btn:hover{box-shadow:0 0 40px rgba(255,0,204,.8);transform:translateY(-2px);}
+
+/* ─── XP TOAST ─── */
+.xp-toast{
+  position:fixed;top:76px;right:16px;
+  background:linear-gradient(90deg,var(--cyan),var(--magenta));
+  color:#07001a;font-family:'Share Tech Mono',monospace;
+  font-size:16px;font-weight:700;padding:9px 18px;
+  border-radius:999px;z-index:500;pointer-events:none;opacity:0;
+  box-shadow:0 0 20px var(--cyan);
+}
+.xp-toast.pop{animation:xpPop 1.4s ease forwards;}
+@keyframes xpPop{
+  0%{opacity:0;transform:scale(.6)translateY(10px)}
+  20%{opacity:1;transform:scale(1.2)translateY(-5px)}
+  35%{transform:scale(1)translateY(0)}
+  70%{opacity:1;transform:translateY(-30px)}
+  100%{opacity:0;transform:translateY(-60px)}
+}
+.star-burst{position:fixed;pointer-events:none;z-index:400;font-size:26px;opacity:0;}
+.star-burst.fly{animation:sFly .9s ease forwards;}
+@keyframes sFly{0%{opacity:1;transform:scale(.5)translateY(0)}100%{opacity:0;transform:scale(1.5)translateY(-90px)}}
+
+/* ─── HOME HEADER ─── */
+#home{background:transparent;}
+.home-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 18px;
+  border-bottom:1px solid rgba(61,0,128,.8);
+  background:rgba(7,0,26,.85);
+  backdrop-filter:blur(14px);
+  position:sticky;top:0;z-index:40;
+}
+.brand{
+  font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;
+  background:linear-gradient(90deg,var(--cyan),var(--magenta),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 8px rgba(0,245,255,.5));
+}
+.brand-sub{
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:1px;
+}
+.hud{display:flex;gap:10px;align-items:center;}
+.hud-item{
+  display:flex;align-items:center;gap:5px;
+  font-family:'Share Tech Mono',monospace;font-weight:700;font-size:14px;
+  background:rgba(61,0,128,.3);
+  border:1px solid rgba(61,0,128,.6);
+  border-radius:8px;padding:4px 10px;
+}
+
+/* ─── MASCOT BANNER ─── */
+.mascot-banner{
+  margin:14px;border-radius:20px;padding:16px;
+  display:flex;align-items:center;gap:14px;
+  background:linear-gradient(135deg,rgba(26,0,74,.8),rgba(8,0,26,.9));
+  border:1px solid rgba(0,245,255,.25);
+  position:relative;overflow:hidden;
+  box-shadow:0 0 30px rgba(0,245,255,.1),inset 0 0 30px rgba(155,0,255,.05);
+}
+.mascot-banner::before{
+  content:'';position:absolute;top:-40px;right:-40px;
+  width:130px;height:130px;
+  background:radial-gradient(circle,rgba(0,245,255,.15),transparent 70%);
+  border-radius:50%;
+}
+.mascot-banner::after{
+  content:'';position:absolute;bottom:-20px;left:-20px;
+  width:100px;height:100px;
+  background:radial-gradient(circle,rgba(255,0,204,.1),transparent 70%);
+  border-radius:50%;
+}
+.mascot{
+  font-size:56px;
+  animation:mFloat 3s ease-in-out infinite;
+  filter:drop-shadow(0 0 16px var(--cyan));
+  flex-shrink:0;position:relative;z-index:1;
+}
+@keyframes mFloat{0%,100%{transform:translateY(0)rotate(-3deg)}50%{transform:translateY(-8px)rotate(3deg)}}
+.mascot-bubble{
+  background:rgba(0,245,255,.04);
+  border:1px solid rgba(0,245,255,.3);
+  border-radius:16px;padding:12px 14px;flex:1;position:relative;z-index:1;
+  box-shadow:inset 0 0 20px rgba(0,245,255,.04);
+}
+.mascot-bubble::before{
+  content:'';position:absolute;left:-10px;top:50%;
+  transform:translateY(-50%);
+  border:8px solid transparent;border-right-color:rgba(0,245,255,.3);
+}
+.bubble-title{
+  font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;
+  color:var(--cyan);margin-bottom:4px;text-shadow:0 0 10px var(--cyan);
+}
+.bubble-text{font-size:12px;color:#c8b0e8;line-height:1.45;}
+
+/* ─── STREAK CARD ─── */
+.streak-card{
+  margin:0 14px 14px;
+  background:linear-gradient(135deg,rgba(26,0,40,.8),rgba(8,0,26,.9));
+  border:1px solid rgba(255,140,0,.3);
+  border-radius:16px;padding:12px 16px;
+  display:flex;align-items:center;gap:12px;
+  box-shadow:0 0 20px rgba(255,140,0,.1);
+}
+.streak-fire{font-size:30px;animation:fireWig .8s ease-in-out infinite alternate;}
+@keyframes fireWig{from{transform:scale(1)rotate(-5deg)}to{transform:scale(1.1)rotate(5deg)}}
+.streak-info{flex:1;}
+.streak-num{font-family:'Share Tech Mono',monospace;font-size:18px;color:var(--orange);text-shadow:0 0 12px var(--orange);}
+.streak-label{font-size:10px;color:#ff9933;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;}
+.streak-days{display:flex;gap:4px;}
+.dd{
+  width:26px;height:26px;border-radius:6px;
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,140,0,.08);border:1px solid rgba(255,140,0,.2);color:var(--muted);
+}
+.dd.done{background:var(--orange);border-color:var(--orange);color:#07001a;box-shadow:0 0 8px var(--orange);}
+.dd.today{border-color:var(--orange);color:var(--orange);}
+
+/* ─── INSIGNIAS HOME ─── */
+.section-title{
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  letter-spacing:3px;text-transform:uppercase;
+  color:var(--purple);padding:0 18px 8px;
+  text-shadow:0 0 10px var(--purple);
+}
+.badges-row{display:flex;gap:10px;padding:0 18px 16px;justify-content:space-around;}
+.badge-big{
+  flex:1;max-width:82px;
+  background:rgba(22,0,61,.5);
+  border:1px solid var(--border);
+  border-radius:18px;padding:14px 8px;
+  text-align:center;cursor:pointer;transition:all .2s;
+}
+.badge-big:hover{transform:scale(1.08);box-shadow:0 0 22px rgba(155,0,255,.4);}
+.badge-big.earned{
+  border-color:var(--cyan);
+  background:linear-gradient(135deg,rgba(0,40,60,.6),rgba(0,20,40,.8));
+  box-shadow:0 0 24px rgba(0,245,255,.25);
+}
+.badge-big-ico{font-size:34px;margin-bottom:6px;display:block;}
+.badge-big.earned .badge-big-ico{filter:drop-shadow(0 0 10px var(--cyan));}
+.badge-big-name{font-size:9px;font-weight:700;color:var(--muted);line-height:1.2;letter-spacing:.5px;}
+.badge-big.earned .badge-big-name{color:var(--cyan);text-shadow:0 0 8px var(--cyan);}
+.badge-big-lock{font-size:11px;color:var(--muted);margin-top:3px;font-family:'Share Tech Mono',monospace;}
+
+/* ─── TEMA SECTIONS ─── */
+.tema-section{margin-bottom:8px;}
+.tema-header{display:flex;align-items:center;gap:10px;padding:10px 18px 8px;}
+.tema-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.tema-name{font-family:'Nunito',sans-serif;font-weight:900;font-size:13px;}
+.tema-weeks{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);margin-left:auto;}
+
+.blocks-list{padding:0 16px;display:flex;flex-direction:column;gap:7px;}
+.block-card{
+  border-radius:14px;border:1px solid var(--border);
+  background:rgba(22,0,61,.4);
+  cursor:pointer;transition:all .18s;
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;position:relative;overflow:hidden;
+  backdrop-filter:blur(4px);
+}
+.block-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,var(--purple),var(--magenta));
+  opacity:0;transition:opacity .2s;
+}
+.block-card:hover{transform:translateX(4px);border-color:var(--purple);box-shadow:0 0 18px rgba(155,0,255,.2);}
+.block-card:hover::before{opacity:1;}
+.block-card.locked{opacity:.45;cursor:default;}
+.block-card.locked:hover{transform:none;border-color:var(--border);box-shadow:none;}
+.block-card.locked:hover::before{opacity:0;}
+.block-card.done{
+  border-color:rgba(0,245,255,.4);
+  background:linear-gradient(135deg,rgba(0,30,40,.6),rgba(0,15,30,.8));
+  box-shadow:0 0 14px rgba(0,245,255,.12);
+}
+.block-card.done::before{background:linear-gradient(180deg,var(--cyan),var(--green));opacity:1;}
+.block-num{
+  width:36px;height:36px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Share Tech Mono',monospace;font-weight:700;font-size:12px;
+  flex-shrink:0;
+}
+.block-info{flex:1;}
+.block-title{font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;margin-bottom:2px;}
+.block-sub{font-size:10px;color:var(--muted);font-weight:600;}
+.block-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+.block-status{font-size:18px;}
+.block-xp{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--yellow);}
+
+/* ─── LESSON ─── */
+#lesson{background:transparent;}
+.lesson-header{
+  display:flex;align-items:center;gap:10px;padding:14px 18px;
+  background:rgba(7,0,26,.88);backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(61,0,128,.6);
+  position:sticky;top:0;z-index:30;
+}
+.close-x{
+  width:38px;height:38px;border-radius:10px;
+  border:1px solid rgba(61,0,128,.6);
+  background:rgba(155,0,255,.08);
+  color:var(--muted);font-size:18px;font-weight:900;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;font-family:'Nunito',sans-serif;
+}
+.close-x:hover{border-color:var(--red);color:var(--red);box-shadow:0 0 14px rgba(255,56,100,.4);}
+.lh-center{flex:1;}
+.lh-title{font-family:'Nunito',sans-serif;font-weight:900;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lh-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:5px;letter-spacing:1px;}
+.prog-track{height:8px;background:rgba(61,0,128,.3);border-radius:999px;overflow:hidden;border:1px solid rgba(61,0,128,.4);}
+.ptf{
+  height:100%;
+  background:linear-gradient(90deg,var(--cyan),var(--magenta));
+  border-radius:999px;transition:width .6s cubic-bezier(.34,1.56,.64,1);
+  position:relative;box-shadow:0 0 8px var(--cyan);
+}
+.ptf::after{content:'';position:absolute;top:1px;right:3px;left:3px;height:2px;background:rgba(255,255,255,.35);border-radius:999px;}
+
+.qwrap{flex:1;padding:16px 18px 170px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;}
+
+/* SEL strip */
+.sel-strip{
+  border-radius:13px;padding:10px 14px;border:1px solid;
+  display:flex;align-items:center;gap:10px;
+  animation:sUp .3s ease;backdrop-filter:blur(4px);
+}
+@keyframes sUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.sel-strip-ico{font-size:20px;flex-shrink:0;}
+.sel-strip-tag{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;opacity:.75;margin-bottom:1px;}
+.sel-strip-prop{font-size:11px;font-weight:700;line-height:1.3;}
+
+/* Scenario / concept */
+.scenario-box,.concept-box{
+  background:rgba(16,0,46,.7);
+  border-radius:16px;padding:14px 16px;border-left:3px solid;
+  animation:sUp .35s ease .05s both;backdrop-filter:blur(4px);
+}
+.scenario-label,.concept-label{
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;opacity:.7;
+}
+.scenario-text{font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;line-height:1.45;margin-bottom:8px;color:#f0e6ff;}
+.scenario-q{font-size:13px;color:#c8b0e8;line-height:1.5;}
+.concept-q{font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;line-height:1.4;color:#f0e6ff;}
+
+/* Options */
+.opts{display:flex;flex-direction:column;gap:8px;animation:sUp .4s ease .1s both;}
+.opt{
+  display:flex;align-items:flex-start;gap:12px;padding:12px 14px;
+  border-radius:13px;border:1px solid var(--border);
+  background:rgba(22,0,61,.45);
+  cursor:pointer;font-family:'Nunito',sans-serif;font-weight:600;font-size:13px;
+  color:var(--text);transition:all .15s;text-align:left;backdrop-filter:blur(4px);
+}
+.opt:hover:not(:disabled){
+  border-color:var(--cyan);background:rgba(0,245,255,.06);
+  transform:translateX(3px);box-shadow:0 0 16px rgba(0,245,255,.15);
+}
+.opt .ol{
+  width:28px;height:28px;min-width:28px;border-radius:7px;
+  background:rgba(155,0,255,.12);border:1px solid rgba(155,0,255,.35);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Share Tech Mono',monospace;font-size:11px;
+  transition:all .15s;margin-top:1px;
+}
+.opt:hover:not(:disabled) .ol{background:var(--cyan);color:#07001a;box-shadow:0 0 10px var(--cyan);}
+.opt.correct{border-color:var(--cyan);background:rgba(0,245,255,.07);animation:cBounce .5s cubic-bezier(.34,1.56,.64,1);box-shadow:0 0 20px rgba(0,245,255,.2);}
+.opt.correct .ol{background:var(--cyan);color:#07001a;box-shadow:0 0 14px var(--cyan);}
+.opt.wrong{border-color:var(--red);background:rgba(255,56,100,.07);animation:wShake .4s ease;box-shadow:0 0 14px rgba(255,56,100,.15);}
+.opt.wrong .ol{background:var(--red);box-shadow:0 0 10px var(--red);}
+@keyframes cBounce{0%{transform:scale(1)}30%{transform:scale(1.03)translateX(3px)}100%{transform:scale(1)}}
+@keyframes wShake{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-7px)}50%{transform:translateX(7px)}}
+
+/* Feedback sheet */
+.fbsheet{
+  position:fixed;bottom:0;left:0;right:0;
+  border-radius:26px 26px 0 0;padding:20px 22px 34px;
+  transform:translateY(110%);transition:transform .45s cubic-bezier(.34,1.4,.64,1);z-index:200;
+}
+.fbsheet.up{transform:translateY(0);}
+.fbsheet.cs{background:rgba(0,20,28,.97);border-top:2px solid var(--cyan);backdrop-filter:blur(20px);}
+.fbsheet.ws{background:rgba(25,0,18,.97);border-top:2px solid var(--red);backdrop-filter:blur(20px);}
+.fbrow{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;}
+.fbmini{font-size:44px;animation:fbM .5s cubic-bezier(.34,1.56,.64,1);}
+@keyframes fbM{from{transform:scale(0)rotate(-30deg)}to{transform:scale(1)rotate(0)}}
+.fbtitle{font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;margin-bottom:3px;}
+.cs .fbtitle{color:var(--cyan);text-shadow:0 0 12px var(--cyan);}
+.ws .fbtitle{color:var(--red);text-shadow:0 0 12px var(--red);}
+.fbexpl{font-size:13px;line-height:1.5;color:#c8b8e8;}
+.fb-sel{margin-top:8px;padding:8px 12px;border-radius:10px;border-left:3px solid;font-size:12px;display:none;}
+.fb-sel-tag{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;opacity:.75;margin-bottom:2px;}
+.fb-sel-prop{font-weight:700;line-height:1.3;font-size:12px;}
+.fbbtn{
+  width:100%;padding:16px;border-radius:14px;border:none;
+  font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;
+  cursor:pointer;letter-spacing:.5px;text-transform:uppercase;
+  transition:all .15s;margin-top:10px;
+}
+.fbbtn:hover{transform:translateY(-2px);}
+.cs .fbbtn{background:linear-gradient(90deg,var(--cyan),var(--green));color:#07001a;box-shadow:0 0 24px rgba(0,245,255,.4);}
+.ws .fbbtn{background:linear-gradient(90deg,var(--red),var(--pink));color:#fff;box-shadow:0 0 20px rgba(255,56,100,.4);}
+
+/* ─── COMPLETE ─── */
+#complete{
+  background:radial-gradient(ellipse at 50% 15%,rgba(155,0,255,.3) 0%,rgba(0,245,255,.08) 40%,var(--bg) 70%);
+  align-items:center;justify-content:center;text-align:center;padding:36px 22px;
+}
+.comp-trophy{font-size:80px;animation:tSpin .8s cubic-bezier(.34,1.56,.64,1) .2s both;filter:drop-shadow(0 0 20px var(--yellow));}
+@keyframes tSpin{from{transform:scale(0)rotate(-40deg);opacity:0}to{transform:scale(1)rotate(0);opacity:1}}
+.comp-title{
+  font-family:'Nunito',sans-serif;font-size:28px;font-weight:900;margin:12px 0 4px;
+  animation:fS .5s ease .5s both;
+  background:linear-gradient(90deg,var(--cyan),var(--magenta));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.comp-sub{color:var(--muted);font-size:13px;animation:fS .5s ease .6s both;}
+@keyframes fS{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.comp-block{
+  font-family:'Share Tech Mono',monospace;font-size:13px;
+  padding:8px 20px;border-radius:999px;margin:12px 0;
+  animation:fS .5s ease .62s both;display:inline-block;
+}
+.res-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:320px;margin:12px 0;animation:fS .5s ease .7s both;}
+.res-card{
+  background:rgba(22,0,61,.5);border:1px solid var(--border);
+  border-radius:14px;padding:14px 6px;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  backdrop-filter:blur(4px);
+}
+.res-ico{font-size:22px;}
+.res-val{font-family:'Share Tech Mono',monospace;font-size:20px;font-weight:700;}
+.res-name{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.home-btn{
+  width:100%;max-width:320px;padding:16px;border-radius:15px;border:none;
+  background:linear-gradient(90deg,var(--purple),var(--magenta));
+  box-shadow:0 0 28px rgba(155,0,255,.5);
+  font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;
+  color:#fff;cursor:pointer;text-transform:uppercase;letter-spacing:1px;
+  transition:all .15s;animation:fS .5s ease .8s both;
+}
+.home-btn:hover{box-shadow:0 0 44px rgba(155,0,255,.85);transform:translateY(-2px);}
+
+/* ─── BOTTOM NAV ─── */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:rgba(7,0,26,.92);border-top:1px solid rgba(61,0,128,.7);
+  display:flex;justify-content:space-around;padding:10px 0 20px;z-index:50;
+  backdrop-filter:blur(18px);
+}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:700;
+  color:var(--muted);cursor:pointer;letter-spacing:.5px;text-transform:uppercase;
+  padding:5px 20px;border-radius:12px;border:none;background:none;transition:all .2s;
+}
+.nav-item .ni{font-size:22px;}
+.nav-item.active{color:var(--cyan);text-shadow:0 0 10px var(--cyan);}
+
+/* ─── MI AVANCE ─── */
+#avancePanel{display:none;padding:16px 16px 100px;flex-direction:column;gap:14px;}
+#avancePanel.show{display:flex;}
+.av-card{
+  background:rgba(22,0,61,.45);border:1px solid var(--border);
+  border-radius:18px;padding:16px 18px;
+  backdrop-filter:blur(6px);
+  box-shadow:inset 0 0 20px rgba(155,0,255,.04);
+}
+.av-card-title{
+  font-family:'Share Tech Mono',monospace;font-size:11px;
+  color:var(--purple);text-transform:uppercase;letter-spacing:2px;
+  margin-bottom:12px;text-shadow:0 0 8px var(--purple);
+}
+.av-big{display:flex;align-items:center;gap:16px;margin-bottom:6px;}
+.av-big-num{font-family:'Share Tech Mono',monospace;font-size:44px;line-height:1;}
+.av-big-label{font-size:13px;color:var(--muted);font-weight:600;line-height:1.5;}
+.av-semestre-bar{height:12px;background:rgba(61,0,128,.3);border-radius:999px;overflow:hidden;margin-top:8px;border:1px solid rgba(61,0,128,.4);}
+.av-semestre-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--magenta));border-radius:999px;transition:width 1.2s ease;box-shadow:0 0 10px var(--cyan);}
+.av-pct{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--cyan);margin-top:5px;text-align:right;text-shadow:0 0 8px var(--cyan);}
+.av-tema-row{margin-bottom:12px;}
+.av-tema-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.av-tema-name{font-size:12px;font-weight:700;}
+.av-tema-count{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);}
+.av-tema-bar{height:6px;background:rgba(61,0,128,.3);border-radius:999px;overflow:hidden;}
+.av-tema-fill{height:100%;border-radius:999px;transition:width .9s ease;}
+.av-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.av-stat{background:rgba(16,0,46,.7);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;}
+.av-stat-ico{font-size:26px;margin-bottom:4px;}
+.av-stat-val{font-family:'Share Tech Mono',monospace;font-size:26px;}
+.av-stat-lbl{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+.av-full{grid-column:1/-1;}
+
+/* ─── Insignias avance ─── */
+.av-badges-grid{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;padding:4px 0;}
+.av-badge-item{text-align:center;cursor:pointer;transition:transform .2s;}
+.av-badge-item:hover{transform:scale(1.1);}
+.av-badge-item .abi{font-size:48px;filter:drop-shadow(0 0 16px var(--cyan));display:block;animation:mFloat 3s ease-in-out infinite;}
+.av-badge-item .abn{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--cyan);margin-top:6px;letter-spacing:1px;text-shadow:0 0 8px var(--cyan);}
+.av-badge-locked{text-align:center;opacity:.55;}
+.av-badge-locked .abli{font-size:36px;display:block;margin-bottom:4px;}
+.av-badge-locked .ablt{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;}
+
+/* ─── SPLASH SCREEN ─── */
+#splash{
+  position:fixed;inset:0;z-index:9000;
+  background:var(--bg);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:18px;
+  transition:opacity .6s ease;
+}
+#splash.fade{opacity:0;pointer-events:none;}
+.splash-logo{
+  font-size:72px;
+  animation:splashPop .8s cubic-bezier(.34,1.56,.64,1);
+  filter:drop-shadow(0 0 24px var(--cyan));
+}
+@keyframes splashPop{from{transform:scale(0)rotate(-20deg);opacity:0}to{transform:scale(1)rotate(0);opacity:1}}
+.splash-brand{
+  font-family:'Nunito',sans-serif;font-size:32px;font-weight:900;
+  background:linear-gradient(90deg,var(--cyan),var(--magenta),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:fS .5s ease .4s both;
+}
+.splash-sub{
+  font-family:'Share Tech Mono',monospace;font-size:11px;
+  color:var(--purple);letter-spacing:3px;text-transform:uppercase;
+  animation:fS .5s ease .6s both;text-shadow:0 0 8px var(--purple);
+}
+.splash-school{
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  color:var(--muted);letter-spacing:2px;text-transform:uppercase;
+  animation:fS .5s ease .7s both;
+}
+.splash-bar{
+  width:160px;height:3px;background:rgba(61,0,128,.3);
+  border-radius:999px;overflow:hidden;margin-top:8px;
+  animation:fS .3s ease .8s both;
+}
+.splash-bar-fill{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,var(--cyan),var(--magenta));
+  border-radius:999px;box-shadow:0 0 8px var(--cyan);
+  animation:loadBar 2s ease .9s forwards;
+}
+@keyframes loadBar{to{width:100%}}
+
+/* ─── LOGIN SCREEN ─── */
+#login{
+  min-height:100vh;
+  display:none;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:32px 24px;gap:0;
+}
+#login.active{display:flex;}
+.login-header{text-align:center;margin-bottom:32px;}
+.login-owl{font-size:64px;animation:mFloat 3s ease-in-out infinite;filter:drop-shadow(0 0 16px var(--cyan));margin-bottom:12px;display:block;}
+.login-title{
+  font-family:'Nunito',sans-serif;font-size:26px;font-weight:900;
+  background:linear-gradient(90deg,var(--cyan),var(--magenta));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:4px;
+}
+.login-sub{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--purple);letter-spacing:2px;text-shadow:0 0 6px var(--purple);}
+.login-card{
+  background:rgba(22,0,61,.5);border:1px solid var(--border);
+  border-radius:24px;padding:28px 24px;width:100%;max-width:360px;
+  backdrop-filter:blur(8px);
+  box-shadow:0 0 40px rgba(155,0,255,.15),inset 0 0 30px rgba(0,245,255,.03);
+}
+.login-label{
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  color:var(--purple);letter-spacing:2px;text-transform:uppercase;
+  margin-bottom:8px;display:block;text-shadow:0 0 6px var(--purple);
+}
+.login-input{
+  width:100%;padding:14px 16px;
+  background:rgba(10,0,21,.7);
+  border:1px solid var(--border);border-radius:12px;
+  font-family:'Share Tech Mono',monospace;font-size:18px;
+  color:var(--cyan);letter-spacing:3px;text-align:center;
+  outline:none;transition:all .2s;margin-bottom:8px;
+  text-transform:uppercase;
+}
+.login-input:focus{border-color:var(--cyan);box-shadow:0 0 16px rgba(0,245,255,.25);}
+.login-input::placeholder{color:var(--muted);letter-spacing:1px;font-size:13px;text-transform:none;}
+.login-hint{
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+  color:var(--muted);letter-spacing:1px;text-align:center;margin-bottom:20px;
+}
+.login-btn{
+  width:100%;padding:16px;border-radius:14px;border:none;
+  background:linear-gradient(90deg,var(--purple),var(--magenta));
+  box-shadow:0 0 24px rgba(155,0,255,.4);
+  font-family:'Nunito',sans-serif;font-size:17px;font-weight:900;
+  color:#fff;cursor:pointer;text-transform:uppercase;letter-spacing:1px;
+  transition:all .2s;
+}
+.login-btn:hover{box-shadow:0 0 36px rgba(155,0,255,.7);transform:translateY(-2px);}
+.login-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.login-error{
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  color:var(--red);text-align:center;margin-top:10px;
+  letter-spacing:1px;text-shadow:0 0 8px var(--red);
+  min-height:16px;
+}
+.login-footer{
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+  color:var(--muted);text-align:center;margin-top:20px;letter-spacing:1px;
+}
+/* User chip in header */
+.user-chip{
+  font-family:'Share Tech Mono',monospace;font-size:9px;
+  color:var(--cyan);background:rgba(0,245,255,.08);
+  border:1px solid rgba(0,245,255,.2);border-radius:8px;
+  padding:3px 8px;letter-spacing:1px;cursor:pointer;
+}
+
+</style>
+</head>
+<body>
+<canvas id="conf"></canvas>
+<div class="xp-toast" id="xpToast">+10 XP ⚡</div>
+
+<!-- BADGE OVERLAY -->
+<div id="badgeOverlay">
+  <div class="badge-popup">
+    <span class="badge-shine" id="bIco"></span>
+    <div class="badge-new">✦ Insignia desbloqueada ✦</div>
+    <div class="badge-name" id="bName"></div>
+    <div class="badge-desc" id="bDesc"></div>
+    <button class="badge-close-btn" onclick="closeBadge()">¡Genial!</button>
+  </div>
+</div>
+
+<!-- ══ SPLASH ══ -->
+<div id="splash">
+  <div class="splash-logo">🦉</div>
+  <div class="splash-brand">SocioMente</div>
+  <div class="splash-sub">Ciencias Sociales II</div>
+  <div class="splash-school">CBTis 179 · DGETI · 2025–2026</div>
+  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+</div>
+
+<!-- ══ LOGIN ══ -->
+<div class="screen" id="login">
+  <div class="login-header">
+    <span class="login-owl">🦉</span>
+    <div class="login-title">¡Bienvenido/a!</div>
+    <div class="login-sub">CBTis 179 · Ciencias Sociales II</div>
+  </div>
+  <div class="login-card">
+    <label class="login-label" for="pinInput">▸ Ingresa tu clave de acceso</label>
+    <input class="login-input" id="pinInput" type="password"
+           placeholder="••••"
+           maxlength="4"
+           inputmode="numeric"
+           oninput="validateMatricula()"
+           onkeydown="if(event.key==='Enter')doLogin()"
+           style="font-size:32px;letter-spacing:12px;text-align:center"/>
+    <div class="login-hint">Los últimos 4 dígitos de tu número de control<br>Ej. si tu control termina en <strong style="color:var(--cyan)">0012</strong>, escribe <strong style="color:var(--cyan)">0012</strong></div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()" disabled>INGRESAR →</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+  <div class="login-footer">Tu progreso se guarda automáticamente en este dispositivo</div>
+</div>
+
+
+<!-- ══ HOME ══ -->
+<div class="screen" id="home">
+  <div class="home-header">
+    <div>
+      <div class="brand">SocioMente 🌎</div>
+      <div class="brand-sub">CS II · CBT · DGETI · 2° Sem · 15 semanas</div>
+    </div>
+    <div class="hud"><div class="user-chip" id="userChip" onclick="showLogout()">👤 —</div>
+      <div class="hud-item" id="rangoHud" style="gap:6px"><span id="hStrIco" style="font-size:14px">👀</span><span id="hStr" style="color:var(--purple);font-size:12px">Observador/a</span></div>
+      <div class="hud-item"><span style="font-size:16px">⚡</span><span id="hXP" style="color:var(--yellow)">0</span></div>
+    </div>
+  </div>
+
+  <div class="mascot-banner">
+    <div class="mascot" style="font-size:56px;animation:mFloat 3s ease-in-out infinite;filter:drop-shadow(0 0 16px var(--cyan));flex-shrink:0">🦉</div>
+    <div class="mascot-bubble">
+      <div class="bubble-title">¡Hola, bachiller! 🦉</div>
+      <div class="bubble-text">15 semanas, 15 bloques. Cada bloque es una situación real que debes analizar. <strong style="color:var(--yellow)">No memorices — piensa.</strong> Completa los 4 temas y gana el Orgullo DGETI 🎓</div>
+    </div>
+  </div>
+
+  <div class="streak-card" id="rangoCard">
+    <div class="streak-fire" id="rangoIco">👀</div>
+    <div class="streak-info" style="flex:1">
+      <div class="streak-num" id="rangoNombre" style="font-size:14px">Observador/a</div>
+      <div class="streak-label">RANGO ACTUAL</div>
+      <div style="margin-top:6px">
+        <div style="height:6px;background:rgba(61,0,128,.3);border-radius:999px;overflow:hidden;border:1px solid rgba(61,0,128,.4)">
+          <div id="rangoBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--magenta));border-radius:999px;transition:width 1s ease;box-shadow:0 0 6px var(--cyan)"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:3px">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted)" id="rangoXPLabel">0 XP</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted)" id="rangoNext"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">▸ Mis insignias</div>
+  <div class="badges-row" id="badgesRow"></div>
+
+  <div id="homeContent"></div>
+  <div id="avancePanel"></div>
+
+  <nav class="bottom-nav">
+    <button class="nav-item active" id="navBtnHome" onclick="showHomeTab()"><span class="ni">🏠</span>Inicio</button>
+    <button class="nav-item" id="navBtnAvance" onclick="showAvanceTab()"><span class="ni">📊</span>Mi avance</button>
+  </nav>
+</div>
+
+<!-- ══ LESSON ══ -->
+<div class="screen" id="lesson">
+  <div class="lesson-header">
+    <button class="close-x" onclick="goHome()">✕</button>
+    <div class="lh-center">
+      <div class="lh-title" id="lhTitle"></div>
+      <div class="lh-sub" id="lhSub"></div>
+      <div class="prog-track"><div class="ptf" id="lessonBar" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="qwrap" id="qWrap"></div>
+  <div class="fbsheet" id="fbSheet">
+    <div class="fbrow">
+      <div class="fbmini" id="fbMascot"></div>
+      <div style="flex:1">
+        <div class="fbtitle" id="fbTitle"></div>
+        <div class="fbexpl" id="fbExpl"></div>
+        <div class="fb-sel" id="fbSel">
+          <div class="fb-sel-tag" id="fbSelTag"></div>
+          <div class="fb-sel-prop" id="fbSelProp"></div>
+        </div>
+      </div>
+    </div>
+    <button class="fbbtn" onclick="nextQ()">CONTINUAR</button>
+  </div>
+</div>
+
+<!-- ══ COMPLETE ══ -->
+<div class="screen" id="complete">
+  <div class="comp-trophy" id="compTrophy">🏆</div>
+  <div class="comp-title" id="compTitle">¡Bloque completado!</div>
+  <div class="comp-sub" id="compSub">¡Excelente, bachiller!</div>
+  <div class="comp-block" id="compBlock"></div>
+  <div class="res-grid">
+    <div class="res-card"><div class="res-ico">⚡</div><div class="res-val" id="rXP" style="color:var(--yellow)">+0</div><div class="res-name">XP</div></div>
+    <div class="res-card"><div class="res-ico">✅</div><div class="res-val" id="rCorr" style="color:var(--cyan)">0/6</div><div class="res-name">Correctas</div></div>
+    <div class="res-card"><div class="res-ico" id="rRangoIco">👀</div><div class="res-val" id="rStr" style="color:var(--purple);font-size:13px">Observador/a</div><div class="res-name">Rango</div></div>
+  </div>
+  <button class="home-btn" onclick="goHome()">SEGUIR APRENDIENDO</button>
+</div>
+
+<script>
+/* ══ AUDIO ══ */
+let AC;
+function getAC(){if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();return AC;}
+function pt(f,tp='sine',d=.18,v=.25,dl=0){try{const ac=getAC(),o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.type=tp;o.frequency.value=f;const t=ac.currentTime+dl;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+d);o.start(t);o.stop(t+d+.01);}catch(e){}}
+function pc(fs,tp='sine',d=.3,v=.18){fs.forEach((f,i)=>pt(f,tp,d,v,i*.04));}
+function sndOk(){pc([523,659,784],'sine',.3,.2);setTimeout(()=>pt(1047,'sine',.4,.22),180);}
+function sndWrong(){pt(330,'sawtooth',.15,.18);setTimeout(()=>pt(277,'sawtooth',.2,.18),120);}
+function sndClick(){pt(880,'sine',.08,.12);}
+function sndBadge(){[523,659,784,1047].forEach((f,i)=>pt(f,'triangle',.4,.25,i*.09));setTimeout(()=>pc([659,784,1047,1319],'sine',.5,.2),450);}
+function sndDone(){[392,494,587,659,784].forEach((f,i)=>pt(f,'triangle',.3,.22,i*.1));setTimeout(()=>pc([1047,1319,1568],'sine',.6,.25),900);}
+
+/* ══ STATE ══ */
+const STATE = {
+  xp: 0, nombre:'', grupo:'', blocksCompleted: [],
+  totalCorrect: 0, totalWrong: 0,
+  badges: { necesidades:false, organizacion:false, produccion:false, dgeti:false }
+};
+
+/* ══ 4 INSIGNIAS ══ */
+const BADGES = [
+  { id:'necesidades', ico:'🛒', name:'Necesidades', desc:'Completaste las 4 semanas del Tema 1: Necesidades y Satisfactores. ¡Ya identificas la desigualdad!', color:'#16a34a', unlocksAfterBlock:4 },
+  { id:'organizacion', ico:'🏘️', name:'Tejedor/a Social', desc:'Terminaste el Tema 2: Organización Social. ¡Sabes identificar discriminación y resistencia!', color:'#7c3aed', unlocksAfterBlock:8 },
+  { id:'produccion', ico:'⚙️', name:'Factor Clave', desc:'Completaste el Tema 3: Factores de Producción. ¡Entiendes cómo se distribuye la riqueza!', color:'#d97706', unlocksAfterBlock:12 },
+  { id:'dgeti', ico:'🎓', name:'Orgullo DGETI', desc:'¡Completaste las 15 semanas de Ciencias Sociales II! Eres un bachiller tecnológico con pensamiento crítico. ¡Orgullo CBT-DGETI!', color:'#ffc800', unlocksAfterBlock:15 },
+];
+
+/* ══ TEMAS ══ */
+const TEMAS = [
+  { nombre:'Tema 1 — Necesidades y Satisfactores', color:'#16a34a', dot:'#4ade80',
+    sel:{ ico:'🟢', ambito:'Ámbito 2 — Educación para la Salud', tc:'#4ade80', border:'#16a34a',
+          prop:'Desarrollar autoconocimiento y cuidado de sí mismo/a.' } },
+  { nombre:'Tema 2 — Organización Social', color:'#7c3aed', dot:'#c084fc',
+    sel:{ ico:'🟣', ambito:'Ámbito 1 — Práctica y Colaboración Ciudadana', tc:'#c084fc', border:'#7c3aed',
+          prop:'Desarrollar diálogo, escucha activa y trabajo colaborativo.' } },
+  { nombre:'Tema 3 — Factores de Producción', color:'#d97706', dot:'#fbbf24',
+    sel:{ ico:'🟡', ambito:'Ámbito 2 — Educación para la Salud', tc:'#fbbf24', border:'#d97706',
+          prop:'Promover decisiones responsables frente a contextos de riesgo.' } },
+  { nombre:'Tema 4 — Relaciones de Poder', color:'#dc2626', dot:'#f87171',
+    sel:{ ico:'🟠', ambito:'Ámbito 4 — Sexualidad y Género', tc:'#f87171', border:'#dc2626',
+          prop:'Analizar la influencia de los roles de género en las relaciones de poder.' } },
+];
+
+/* ══════════════════════════════════════════
+   16 BLOQUES × 6 PREGUNTAS
+   Tipos: 'situacion' | 'concepto'
+   En cada bloque: 4 situacionales + 2 conceptuales
+══════════════════════════════════════════ */
+const BLOQUES = [
+
+/* ── TEMA 1: NECESIDADES Y SATISFACTORES ── */
+{
+  semana:1, titulo:'¿Qué necesitamos para vivir bien?', temaIdx:0,
+  preguntas:[
+    { tipo:'situacion',
+      escenario:'Jorge llega al plantel sin desayunar por tercera vez esta semana. En clase le cuesta concentrarse y se queda dormido. Sus calificaciones están bajando.',
+      q:'¿Cuál es la causa principal del problema de Jorge?',
+      opts:['No le interesa estudiar', 'Una necesidad básica sin cubrir — la alimentación — está afectando su capacidad de aprender', 'Es muy flojo y necesita más disciplina', 'Duerme mal porque usa el celular de noche'], correct:1, explain:'Sin alimentación adecuada el cerebro no puede funcionar bien. El bajo rendimiento de Jorge no es un problema de actitud sino de una necesidad básica insatisfecha. Eso es desigualdad que entra al salón.',
+      selLink:'Reconocer que las necesidades físicas afectan el bienestar mental y el aprendizaje es autoconocimiento real.' },
+    { tipo:'situacion',
+      escenario:'En tu comunidad el gobierno inauguró un "centro de salud" con mucho festejo. Pero cuando la gente llega, no hay médico fijo, los medicamentos se acaban a mitad del mes y el horario es de 8 a 2.',
+      q:'¿Qué problema ilustra esta situación?',
+      opts:['El gobierno cumplió con poner el centro — la gente debería agradecer', 'Es un problema de los empleados del centro, no del sistema', 'Existe el servicio en papel pero no funciona en la práctica — la necesidad de salud sigue sin satisfacerse realmente', 'La gente debería ir al médico privado si puede pagarlo'], correct:2, explain:'Que exista una instalación no significa que la necesidad esté cubierta. Un servicio sin médico, sin medicamentos y con horario limitado es un satisfactor que no satisface. La desigualdad se oculta detrás de inauguraciones.',
+      selLink:'Evaluar si los servicios realmente cubren tus necesidades — no solo si existen — es parte del cuidado consciente de tu salud.' },
+    { tipo:'concepto',
+      q:'¿Cuál es la diferencia entre una necesidad y un satisfactor?',
+      opts:['La necesidad es la carencia (hambre, afecto, seguridad) y el satisfactor es la forma de cubrirla (comida, familia, trabajo)', 'Las necesidades las decide el gobierno y los satisfactores el mercado', 'El satisfactor es lo que pide la gente rica y la necesidad lo que pide la gente pobre', 'Son lo mismo — ambos son cosas que queremos tener'], correct:0, explain:'La necesidad es la carencia: hambre, soledad, inseguridad. El satisfactor es la forma de cubrirla: comida, comunidad, empleo. Un mismo satisfactor puede cubrir varias necesidades a la vez.',
+      selLink:'Distinguir qué necesitas de qué te ofrecen para cubrirlo es una habilidad clave de autoconocimiento.' },
+    { tipo:'situacion',
+      escenario:'Diana trabaja los fines de semana vendiendo en el mercado para ayudar en su casa. Sus compañeros van al cine, salen y conviven. Ella casi nunca puede ir. Se siente aislada y triste.',
+      q:'¿Qué necesidad de Diana va más allá del dinero?',
+      opts:['La necesidad de pertenencia, recreación y vínculos sociales — igual de importantes que las materiales, y también afectadas por la desigualdad económica', 'Es una decisión suya trabajar — podría parar si quisiera', 'Debería esforzarse más para tener tiempo libre', 'Si tuviera más dinero todo estaría resuelto'], correct:0, explain:'Las necesidades no son solo materiales. La recreación, el afecto y la pertenencia son tan fundamentales como comer. Cuando la desigualdad económica cancela también estas necesidades, el impacto es integral.',
+      selLink:'Reconocer tus propias necesidades emocionales y sociales — no solo las materiales — es parte esencial del cuidado de ti mismo/a.' },
+    { tipo:'concepto',
+      q:'¿Por qué decimos que la desigualdad social tiene varias dimensiones y no es solo económica?',
+      opts:['Porque la desigualdad opera en múltiples áreas al mismo tiempo: ingresos, salud, educación, territorio y reconocimiento cultural — y se refuerzan entre sí', 'Porque el gobierno así lo define en sus programas', 'Porque los pobres también sufren emocionalmente', 'Porque los ricos también tienen problemas'], correct:0, explain:'La desigualdad no es solo ganar poco. Alguien puede tener ingresos medios pero vivir lejos de hospitales, estudiar en una escuela sin recursos o ser discriminado por su origen. Esas dimensiones se suman y amplifican.',
+      selLink:'Entender la desigualdad en todas sus dimensiones te ayuda a leer mejor tu propio contexto y el de tu comunidad.' },
+    { tipo:'situacion',
+      escenario:'Un candidato promete en campaña dar despensas cada mes si gana. Mucha gente lo apoya porque en su colonia hay mucha pobreza y hambre real.',
+      q:'¿Por qué las despensas pueden ser un satisfactor problemático aunque cubran una necesidad real?',
+      opts:['El problema es que no alcanzan para todos', 'Solo es malo si la comida es de mala calidad', 'No hay nada de malo — si hay hambre, la comida siempre es buena', 'Porque cubren temporalmente el hambre pero no atacan la causa de la pobreza, y pueden crear dependencia política en lugar de condiciones reales de bienestar'], correct:3, explain:'Dar despensas sin atacar las causas de la pobreza es como tapar una fuga con un trapo. Satisface el hambre hoy pero no genera condiciones para que mañana la gente no tenga hambre. Y cuando viene del voto, se convierte en un intercambio desigual de poder.',
+      selLink:'Evaluar críticamente qué se te ofrece como "solución" — y a quién beneficia realmente — es una habilidad de salud colectiva.' },
+  ]
+},
+
+{
+  semana:2, titulo:'La desigualdad en tu colonia', temaIdx:0,
+  preguntas:[
+    { tipo:'situacion',
+      escenario:'En la colonia Primavera hay agua potable las 24 horas. En la colonia Pedregal, a 3 km de distancia, el agua llega solo miércoles y sábados por 2 horas. Ambas están en el mismo municipio.',
+      q:'¿Qué dice esta diferencia sobre cómo se distribuyen los servicios básicos?',
+      opts:['La colonia Pedregal debería organizarse mejor para pagar más', 'Es normal — unas colonias son más antiguas y por eso tienen más servicios', 'Refleja desigualdad territorial: la calidad de los servicios básicos varía según el nivel socioeconómico de la zona, no solo por infraestructura técnica', 'Es responsabilidad de cada familia tener su propio tinaco'], correct:2, explain:'El acceso al agua no depende solo de la infraestructura: depende de decisiones políticas sobre dónde se invierte. Las colonias más pobres reciben peor servicio, lo que profundiza la desigualdad ya existente.',
+      selLink:'Identificar la desigualdad en tu entorno inmediato — no solo en estadísticas nacionales — es la base del autoconocimiento social.' },
+    { tipo:'situacion',
+      escenario:'Rodrigo vive a 45 minutos del plantel. Sale de su casa a las 5:45 AM, llega cansado y a veces llega tarde cuando no alcanza camión. Sus compañeros que viven cerca llegan frescos y a tiempo.',
+      q:'¿Qué dimensión de la desigualdad afecta directamente a Rodrigo?',
+      opts:['No es desigualdad — todo el mundo tiene que transportarse', 'La desigualdad de esfuerzo — él debería madrugar más', 'Es su responsabilidad vivir más cerca de la escuela', 'La desigualdad territorial y de movilidad: vivir lejos sin transporte eficiente es una desventaja real que afecta el rendimiento escolar aunque nadie la vea como "desigualdad"'], correct:3, explain:'La distancia, el tiempo y el costo del transporte son formas concretas de desigualdad que afectan el aprendizaje. Dos estudiantes con las mismas capacidades no parten del mismo punto si uno vive a 10 minutos y otro a 45.',
+      selLink:'Reconocer las condiciones materiales que te afectan — sin culparte — es autoconocimiento que te permite actuar con más claridad.' },
+    { tipo:'concepto',
+      q:'¿Qué significa que la pobreza sea "multidimensional"?',
+      opts:['Que hay pobreza en todos los países del mundo sin excepción', 'Que la pobreza no se mide solo por ingresos sino por carencias en salud, educación, vivienda, alimentación y seguridad social — y alguien puede ser pobre en varias dimensiones a la vez', 'Que hay muchos tipos de pobres en el mundo', 'Que la pobreza tiene muchas causas y ninguna solución'], correct:1, explain:'Una familia puede tener ingresos mínimamente suficientes pero sin acceso a salud, con hijos en escuelas sin recursos y en una vivienda sin servicios. La pobreza multidimensional mide todas esas carencias juntas, no solo el salario.',
+      selLink:'Leer tu propia situación más allá del dinero te da una imagen más completa de tu bienestar real.' },
+    { tipo:'situacion',
+      escenario:'En tu plantel, algunos estudiantes tienen laptop, internet en casa y un cuarto tranquilo para estudiar. Otros estudian con el celular del papá, sin internet fijo y con ruido de hermanos pequeños.',
+      q:'Cuando el maestro deja tareas que requieren internet y computadora, ¿qué desigualdad reproduce sin querer?',
+      opts:['El maestro no puede saber la situación de cada quien', 'Ninguna — todos los estudiantes tienen acceso a algún dispositivo hoy en día', 'Desigualdad digital: las condiciones para hacer la tarea no son iguales, y si no se considera eso, la evaluación mide recursos económicos, no solo aprendizaje', 'Es responsabilidad de los estudiantes conseguir los materiales necesarios'], correct:2, explain:'La brecha digital reproduce la desigualdad socioeconómica dentro del salón. Cuando las tareas asumen que todos tienen los mismos recursos, el sistema penaliza a quienes menos tienen. Eso no es neutral — es reproducción de desigualdad.',
+      selLink:'Identificar estas dinámicas en tu propia vida escolar te permite nombrarlas y eventualmente plantear alternativas.' },
+    { tipo:'concepto',
+      q:'¿Qué es el "bienestar social" como concepto más allá del bienestar individual?',
+      opts:['Los programas de gobierno que ayudan a los más pobres', 'Las condiciones colectivas que permiten a todos los miembros de una sociedad desarrollarse: servicios públicos, seguridad, trabajo digno, salud y educación accesibles', 'Que la economía del país crezca cada año', 'Que cada persona esté feliz con su vida'], correct:1, explain:'El bienestar social es colectivo: no basta con que algunos estén bien si otros no tienen acceso a lo básico. Una sociedad con alto bienestar social garantiza condiciones mínimas para todos, no solo beneficios para quienes pueden pagarlos.',
+      selLink:'Pensar en el bienestar colectivo y no solo el individual forma parte del cuidado de sí que propone el Ámbito de Salud.' },
+    { tipo:'situacion',
+      escenario:'El papá de Valeria perdió su trabajo en la pandemia. Aunque ya trabaja de nuevo, gana menos. Ella nota que en casa hay menos comida variada, no se pudo pagar internet un mes y su mamá está más estresada.',
+      q:'¿Qué muestra este caso sobre la relación entre economía familiar y bienestar?',
+      opts:['Es culpa de la pandemia y no dice nada sobre el sistema', 'La inestabilidad económica afecta simultáneamente la alimentación, la educación, la salud mental y las relaciones familiares — el bienestar es integral, no se puede separar por partes', 'Solo afecta el dinero disponible, lo demás sigue igual', 'Es un problema temporal que se resuelve solo con tiempo'], correct:1, explain:'El bienestar no se divide en cajitas. Cuando el ingreso cae, cae también la alimentación, el acceso a herramientas de estudio y la estabilidad emocional de toda la familia. Todo está conectado — eso es lo que hace a la desigualdad tan profunda.',
+      selLink:'Entender cómo tu contexto económico afecta tu bienestar integral — no solo tu bolsillo — es parte del autoconocimiento que busca el Ámbito 2.' },
+  ]
+},
+
+{
+  semana:3, titulo:'¿Quién decide qué es "suficiente"?', temaIdx:0,
+  preguntas:[
+    { tipo:'situacion',
+      escenario:'El gobierno anuncia que la pobreza "bajó" porque más familias superaron la línea de bienestar de 3,500 pesos mensuales. En tu comunidad, ese dinero no alcanza ni para renta y comida.',
+      q:'¿Qué problema tiene medir la pobreza solo con una línea de dinero?',
+      opts:['Que ignora el costo real de vida en cada región y oculta carencias en salud, educación y servicios que el dinero solo no resuelve', 'Ninguno — los números no mienten', 'Que el gobierno debería subir la línea a 4,000 pesos', 'Que la gente siempre se queja aunque mejore su situación'], correct:0, explain:'Una línea de dinero promedio no captura la realidad de quien vive en ciudad cara, tiene hijos, padece una enfermedad o vive lejos de servicios. Medir la pobreza así puede hacer "desaparecer" pobres en papel sin que su vida cambie.',
+      selLink:'Cuestionar cómo se mide el bienestar — y quién decide qué es "suficiente" — es parte de un cuidado crítico de ti mismo y tu comunidad.' },
+    { tipo:'concepto',
+      q:'Cuando hablamos de "satisfactores sinérgicos", ¿a qué tipo de solución nos referimos?',
+      opts:['A formas de cubrir una necesidad que al mismo tiempo cubren otras necesidades — como una huerta comunitaria que da comida, genera vínculos y produce identidad colectiva', 'A satisfactores que solo funcionan si los compra mucha gente', 'A programas de gobierno que satisfacen a todos', 'A satisfactores importados de otros países'], correct:0, explain:'Un satisfactor sinérgico cubre varias necesidades a la vez. Una huerta comunitaria satisface el hambre pero también genera comunidad, aprendizaje, identidad y autonomía. Al revés, un satisfactor puede cubrir una necesidad y destruir otra (pseudosatisfactor).',
+      selLink:'Buscar soluciones que nutran varias dimensiones de tu bienestar al mismo tiempo es pensamiento integral sobre el cuidado propio.' },
+    { tipo:'situacion',
+      escenario:'En el plantel se propone un programa de desayunos escolares con sopas instantáneas y jugos de caja. Los estudiantes los reciben con gusto porque muchos llegan sin comer.',
+      q:'¿Por qué este programa puede ser un "pseudosatisfactor"?',
+      opts:['Porque cubre temporalmente el hambre pero aporta poco nutricionalmente y puede generar dependencia al programa sin resolver por qué los estudiantes llegan sin comer', 'Solo sería pseudosatisfactor si la comida fuera de mala calidad', 'Porque los desayunos deberían ser más variados en sabores', 'El programa está bien — algo es mejor que nada'], correct:0, explain:'Un pseudosatisfactor parece cubrir una necesidad pero lo hace de forma superficial o genera efectos negativos. Los ultraprocesados calman el hambre a corto plazo pero afectan la salud. Y si el programa desaparece, el problema de fondo sigue igual.',
+      selLink:'Evaluar si lo que te ofrecen como "solución" realmente cuida tu salud a largo plazo forma parte del autoconocimiento crítico del Ámbito 2.' },
+    { tipo:'situacion',
+      escenario:'Lupita quiere estudiar medicina pero su preparatoria no tiene laboratorio, no hay clases de química bien equipadas y sus maestros tienen muchos grupos. Sus compañeros de escuela privada sí tienen todo eso.',
+      q:'¿Qué desigualdad está limitando el futuro de Lupita?',
+      opts:['Su falta de esfuerzo y determinación', 'Debería buscar una beca para cambiarse de escuela', 'La desigualdad educativa: el punto de partida no es igual para todos — la calidad de la escuela condiciona las oportunidades, aunque el talento sea igual', 'Es un problema del sistema de salud, no educativo'], correct:2, explain:'El mérito no opera en vacío. Lupita puede tener el talento y la dedicación, pero sin los recursos educativos adecuados, sus posibilidades son menores que las de quien sí los tiene. La desigualdad educativa reproduce la desigualdad social.',
+      selLink:'Reconocer las barreras reales en tu trayectoria — sin culparte ni resignarte — es parte de cuidarte con consciencia crítica.' },
+    { tipo:'situacion',
+      escenario:'Andrés lleva meses trabajando y estudiando. Llega cansado, ya no convive con amigos y siente que siempre está corriendo. Dice que "está bien" porque paga sus gastos.',
+      q:'¿Qué necesidades de Andrés no está reconociendo como importantes?',
+      opts:['El cansancio es parte de la vida adulta que le toca vivir ya', 'Ninguna — si puede pagar sus cosas está cubriendo lo esencial', 'Las necesidades de descanso, recreación, afecto y tiempo libre — que también son fundamentales y cuya ausencia genera desgaste físico y emocional aunque uno "se sostenga" económicamente', 'Debería administrar mejor su tiempo'], correct:2, explain:'Sobrevivir económicamente no equivale a vivir bien. Las necesidades de descanso, vínculos y recreación son tan básicas como comer. Cuando las negamos durante mucho tiempo, el costo se paga en salud física y mental.',
+      selLink:'Identificar cuándo estás descuidando necesidades propias — aunque "te mantengas" — es la base del autoconocimiento y el cuidado de sí.' },
+    { tipo:'concepto',
+      q:'¿Por qué se dice que las necesidades humanas son "universales" aunque los satisfactores sean distintos en cada cultura?',
+      opts:['Porque la globalización igualó las necesidades de todos', 'Porque los organismos internacionales así lo decidieron', 'Porque todas las personas en el mundo consumen los mismos productos', 'Porque todas las personas comparten necesidades básicas — afecto, seguridad, identidad, participación — aunque cada cultura las satisfaga de formas distintas y no hay una sola manera "correcta"'], correct:3, explain:'El afecto se puede expresar con un abrazo, una danza, una comida compartida o una carta. La necesidad es la misma; el satisfactor varía culturalmente. Entender esto evita imponer una sola forma de vivir como "la correcta".',
+      selLink:'Respetar que tu forma de cubrir necesidades puede ser diferente a la de otros — sin que ninguna sea inferior — es autoconocimiento con perspectiva intercultural.' },
+  ]
+},
+
+{
+  semana:4, titulo:'Pobreza: ¿decisión o estructura?', temaIdx:0,
+  preguntas:[
+    { tipo:'situacion',
+      escenario:'En redes sociales alguien publica: "Yo salí de la pobreza a puro esfuerzo. El que quiere, puede. Los pobres son pobres porque no se esfuerzan." El post tiene miles de likes.',
+      q:'¿Qué problema tiene esta afirmación aunque el caso de esa persona sea real?',
+      opts:['Generaliza una excepción como regla: ignora que las estructuras desiguales hacen que el mismo esfuerzo produzca resultados muy diferentes según el punto de partida de cada persona', 'El esfuerzo sí es lo más importante — las demás cosas son excusas', 'Ninguno — si ella pudo, todos pueden', 'Es envidioso criticar a alguien que salió adelante'], correct:0, explain:'Que alguien logre salir de la pobreza con esfuerzo es real y valioso. Pero usarlo para decir que todos pueden si se esfuerzan ignora que las condiciones de partida no son iguales. Eso convierte una excepción en regla — y culpa a los pobres de su pobreza.',
+      selLink:'Identificar mensajes que individualizan problemas estructurales te protege de asumir responsabilidades que no son solo tuyas.' },
+    { tipo:'concepto',
+      q:'¿Qué es la "movilidad social" y por qué en México es limitada?',
+      opts:['Que la gente se mueve mucho de ciudad en ciudad', 'La capacidad del gobierno de redistribuir la riqueza', 'La capacidad de moverse entre ciudades para buscar trabajo', 'La posibilidad de cambiar de posición económica a lo largo de la vida — en México es baja porque la educación, los contactos y los recursos familiares condicionan fuertemente el futuro de cada persona'], correct:3, explain:'En México, el nivel socioeconómico de tus padres es uno de los principales factores que predicen tu futuro económico. La movilidad social existe pero es baja — lo que indica que el sistema no premia solo el esfuerzo individual.',
+      selLink:'Entender las limitaciones reales de la movilidad social te ayuda a planificar tu vida con una visión más completa — ni ingenua ni derrotista.' },
+    { tipo:'situacion',
+      escenario:'El hermano mayor de Fernanda consiguió trabajo en una empresa grande "porque conocía a alguien". Fernanda, igual de preparada, lleva meses buscando trabajo sin resultado.',
+      q:'¿Qué factor determina quién consigue trabajo en este caso más allá del mérito?',
+      opts:['La empresa tiene razón de contratar a quien conocen — así es más confiable', 'El capital social — las redes de contactos — que se distribuye de forma desigual: quienes tienen más contactos de mayor nivel tienen ventaja aunque su preparación sea igual', 'El mercado laboral funciona así y no hay nada que hacer', 'Fernanda debería prepararse más o bajar sus expectativas'], correct:1, explain:'El capital social — a quién conoces — es tan importante en el mercado laboral como la preparación. Y ese capital no se distribuye igual: quienes crecen con redes de contacto más amplias y mejor posicionadas tienen ventajas estructurales, no solo de mérito.',
+      selLink:'Reconocer el papel de las redes y el contexto — no solo tu esfuerzo — en tus oportunidades te da una visión más realista para tomar decisiones de vida.' },
+    { tipo:'situacion',
+      escenario:'En el barrio de Tomás, la mayoría de los jóvenes terminan trabajando en lo mismo que sus padres: comercio informal, albañilería o trabajo doméstico. Pocos llegan a la universidad.',
+      q:'¿Qué fenómeno social ilustra este patrón?',
+      opts:['El mercado laboral siempre necesita trabajadores en esos sectores', 'Que esos trabajos son los que le gustan a esa gente', 'Es una decisión libre de cada familia', 'La reproducción social: los hijos tienden a ocupar posiciones similares a las de sus padres porque los recursos, contactos y expectativas se transmiten entre generaciones, limitando la movilidad'], correct:3, explain:'La reproducción social es el proceso por el cual las desigualdades se transmiten entre generaciones. No es destino biológico ni decisión libre — es el resultado de cómo el acceso a recursos, educación y redes se hereda o no se hereda.',
+      selLink:'Entender este patrón no es para resignarse — es para identificar en qué punto puedes intervenir en tu propia trayectoria con información real.' },
+    { tipo:'situacion',
+      escenario:'Tu escuela lanza una campaña: "Si estudias, triunfas." La usan en carteles y en el discurso del director cada semana.',
+      q:'¿Qué problema tiene este mensaje en el contexto de lo que has aprendido sobre desigualdad?',
+      opts:['La escuela debería decir algo más ambicioso', 'Ninguno — es motivador y los jóvenes necesitan motivación', 'Es verdad — los que fracasan es porque no estudiaron lo suficiente', 'Simplifica una realidad compleja: la educación ayuda pero no garantiza el éxito si no hay condiciones estructurales — mercado laboral justo, contactos, recursos económicos, lugar de origen — que acompañen ese esfuerzo'], correct:3, explain:'La meritocracia escolar ("si estudias, triunfas") esconde que el "mérito" no opera en condiciones iguales. Estudiar sí importa — pero no basta cuando las estructuras favorecen a unos sobre otros. El mensaje puede generar culpa injusta en quienes se esfuerzan y no obtienen los resultados prometidos.',
+      selLink:'Cuestionar mensajes que simplifican la realidad — incluso los bien intencionados — es parte del pensamiento crítico que cuida tu salud mental y tu proyecto de vida.' },
+    { tipo:'concepto',
+      q:'¿Qué es una "estructura social" y cómo condiciona las decisiones individuales?',
+      opts:['El edificio donde trabaja el gobierno', 'Las costumbres que cada familia elige seguir', 'El conjunto de normas, instituciones y relaciones de poder que organizan la sociedad y que — aunque no las veamos — moldean las opciones disponibles para cada persona según su posición', 'Las decisiones que toma el presidente cada sexenio'], correct:2, explain:'Una estructura social no se ve pero se siente: la economía, el sistema educativo, las leyes, los usos culturales. No determinan completamente lo que haces, pero sí delimitan el rango de opciones reales disponibles. Ignorarlas lleva a culpar a los individuos de lo que produce el sistema.',
+      selLink:'Ver la estructura detrás de las decisiones — propias y ajenas — es la base del análisis social y también de un autoconocimiento honesto.' },
+  ]
+},
+
+/* ── TEMA 2: ORGANIZACIÓN SOCIAL ── */
+{
+  semana:5, titulo:'La familia como institución', temaIdx:1,
+  preguntas:[
+    { tipo:'situacion',
+      escenario:'En casa de Mariana, el papá decide todo: adónde van, cuándo salen, qué estudian los hijos. La mamá y los hijos rara vez opinan. Cuando Mariana quiere estudiar fuera de la ciudad, el papá dice no, sin más.',
+      q:'¿Qué tipo de organización familiar está describiendo este caso?',
+      opts:['Una familia normal donde el papá cuida y protege', 'Una familia tradicional que merece respeto sin cuestionamiento', 'Un caso extremo que no representa a la mayoría', 'Una familia con estructura autoritaria y patriarcal donde el poder se concentra en una persona y se niega la autonomía a los demás miembros'], correct:3, explain:'La familia no es solo afecto: es también una institución con estructuras de poder. Cuando ese poder se concentra y niega la voz de los demás, reproduce desigualdad dentro del hogar — especialmente hacia mujeres y jóvenes.',
+      selLink:'Identificar cómo las relaciones de poder operan dentro de los espacios más cercanos — como la familia — es el primer paso del diálogo ciudadano.' },
+    { tipo:'concepto',
+      q:'¿Por qué la familia se considera una "institución social" y no solo un grupo de personas que se quieren?',
+      opts:['Porque cumple funciones sociales reconocidas: socializa a las nuevas generaciones, transmite normas y valores, y organiza la vida cotidiana — funciones que tienen impacto en toda la sociedad', 'Porque está regulada por el gobierno a través del matrimonio', 'Porque así lo dicta la tradición religiosa', 'Porque hay leyes que obligan a vivir en familia'], correct:0, explain:'La familia es una institución porque cumple funciones sociales sistemáticas: transmite el lenguaje, las normas, los roles de género y los valores de una generación a otra. Esas funciones la hacen social, no solo personal — y por eso se puede y debe analizar críticamente.',
+      selLink:'Analizar la institución familiar con ojos críticos — sin atacarla — activa exactamente el tipo de diálogo que propone el Ámbito Ciudadano.' },
+    { tipo:'situacion',
+      escenario:'Los papás de Ernesto llevan años diciéndole que "los hombres no lloran" y que debe ser "fuerte". Ahora que tiene 16 años, cuando se siente triste o asustado, no sabe qué hacer con eso y a veces reacciona con enojo.',
+      q:'¿Qué está transmitiendo la familia a Ernesto y con qué consecuencias?',
+      opts:['Es una manera cultural de ser hombre que debe respetarse', 'Le están enseñando a ser responsable y fuerte — eso es positivo', 'Un mandato de género que suprime la expresión emocional — lo que a largo plazo puede generarle dificultades para identificar y manejar sus emociones y relacionarse sanamente', 'Ernesto solo necesita crecer para entender que así es la vida'], correct:2, explain:'La familia transmite mandatos de género que moldean cómo vivimos nuestras emociones. "Los hombres no lloran" no es verdad biológica — es una enseñanza social que puede generar daño emocional real cuando suprime algo tan humano como sentir.',
+      selLink:'Reconocer los mensajes que recibiste en casa sobre cómo debes ser — y cuestionarlos — es diálogo ciudadano que empieza en lo íntimo.' },
+    { tipo:'situacion',
+      escenario:'La abuela de Sofía siempre le dice: "Estudia, pero no te vayas lejos — una mujer debe estar cerca de su familia." Sofía recibió una beca para estudiar en otra ciudad.',
+      q:'¿Qué tensión social illustra este momento en la vida de Sofía?',
+      opts:['Es solo un problema familiar privado', 'La abuela tiene razón — la familia siempre debe ser primero', 'El choque entre mandatos tradicionales de género que limitan la autonomía de las mujeres y el derecho a desarrollarse — un conflicto entre institución familiar y derechos individuales', 'Sofía debería encontrar una solución intermedia sin ofender a su abuela'], correct:2, explain:'La institución familiar puede ser fuente de amor y también de mandatos que limitan. Sofía no enfrenta solo una decisión personal: enfrenta expectativas de género transmitidas generacionalmente. Identificar esa tensión — sin demonizar a nadie — es pensamiento social crítico.',
+      selLink:'El diálogo sobre estas tensiones en la familia forma parte del trabajo ciudadano de construir relaciones más equitativas.' },
+    { tipo:'situacion',
+      escenario:'En la comunidad de San Pedro, cuando alguien necesita ayuda para construir su casa, todos los vecinos se organizan para trabajar juntos un día. Después, los dueños de la casa dan comida y bebida para todos. Lo llaman "tequio".',
+      q:'¿Qué forma de organización social representa el tequio?',
+      opts:['Una costumbre antigua que ya no tiene sentido', 'Una forma de organización comunitaria basada en reciprocidad y ayuda mutua — que cubre necesidades colectivas sin necesitar dinero ni gobierno de por medio', 'Un negocio informal de construcción', 'Un trabajo mal pagado que explota a los vecinos'], correct:1, explain:'El tequio es organización comunitaria: trabajo colectivo, voluntario y recíproco. Muestra que las comunidades tienen formas propias de satisfacer necesidades que no dependen solo del mercado o del Estado — y que eso tiene enorme valor social.',
+      selLink:'Reconocer y valorar las formas de organización colectiva de tu comunidad es colaboración ciudadana en su expresión más concreta.' },
+    { tipo:'concepto',
+      q:'¿Cuál es la diferencia entre una familia "nuclear" y una "extensa" como formas de organización?',
+      opts:['La familia nuclear incluye solo padres e hijos, mientras la extensa incluye abuelos, tíos y otros parientes en la misma dinámica — ambas son formas válidas de organización con distintas funciones sociales y económicas', 'La familia extensa siempre tiene más problemas', 'Solo importa el tamaño de la casa, no la estructura familiar', 'La familia nuclear es moderna y la extensa es atrasada'], correct:0, explain:'No existe un único modelo correcto de familia. La extensa genera redes de apoyo más amplias (cuidado de niños, soporte económico) mientras la nuclear tiende a mayor privacidad. Ambas responden a condiciones económicas, culturales e históricas específicas.',
+      selLink:'Reconocer la diversidad de formas familiares — sin jerarquizarlas — activa la escucha activa y el respeto que propone el Ámbito Ciudadano.' },
+  ]
+},
+
+{
+  semana:6, titulo:'Racismo y discriminación cotidiana', temaIdx:1,
+  preguntas:[
+    { tipo:'situacion',
+      escenario:'En el trabajo de mamá de Luis, le asignaron el turno de noche y los trabajos más pesados "porque así son los de su rancho". Sus compañeros de ciudad tienen horarios más cómodos y puestos mejor pagados.',
+      q:'¿Qué tipo de discriminación está viviendo la mamá de Luis?',
+      opts:['Debería buscar otro trabajo si no le gusta', 'Discriminación por origen regional: su procedencia geográfica se usa para asignarle peores condiciones laborales — eso es ilegal y una forma de racismo cotidiano', 'Es solo mala suerte con el jefe — no tiene que ver con su origen', 'El jefe tiene derecho de organizar los turnos como quiera'], correct:1, explain:'Discriminar en el trabajo por el origen regional o étnico de alguien es ilegal y viola derechos humanos laborales. Este tipo de racismo cotidiano muchas veces no se reconoce como tal porque parece "normal" — y eso lo hace más difícil de combatir.',
+      selLink:'Reconocer la discriminación cuando ocurre — aunque parezca "normal" — es el primer paso del diálogo ciudadano para transformarla.' },
+    { tipo:'situacion',
+      escenario:'En un centro comercial, un guardia de seguridad sigue discretamente a un grupo de jóvenes con ropa sencilla y tez morena. No sigue a los otros clientes con ropa de marca.',
+      q:'¿Qué mecanismo de discriminación está operando?',
+      opts:['El perfilamiento racial: asociar la apariencia física y la clase social con la sospecha de delito — lo que estigmatiza a personas por cómo se ven, no por lo que hacen', 'El guardia está haciendo bien su trabajo — previene robos', 'Los jóvenes deberían vestirse mejor para no generar sospechas', 'Es precaución normal, no discriminación'], correct:0, explain:'El perfilamiento racial trata a personas como sospechosas por su apariencia, etnia o clase social. No se basa en conductas sino en estereotipos. Es una forma de discriminación que vulnera la dignidad y la presunción de inocencia.',
+      selLink:'Identificar este tipo de discriminación en espacios cotidianos — y no naturalizarla — es parte del ejercicio ciudadano crítico.' },
+    { tipo:'concepto',
+      q:'¿Por qué el racismo se considera un problema estructural y no solo de actitudes individuales?',
+      opts:['Porque los medios de comunicación lo exageran', 'Porque hay muchas personas racistas en el mundo', 'Porque además de expresarse en conductas individuales, el racismo está incorporado en instituciones, leyes, medios de comunicación y prácticas sociales que sistemáticamente desventajan a ciertos grupos étnicos', 'Porque solo afecta a los grupos más discriminados'], correct:2, explain:'El racismo estructural existe aunque nadie "quiera" ser racista. Está en los salarios promedio por etnia, en qué caras aparecen en medios, en quién accede a qué empleos. Combatirlo requiere más que cambiar actitudes individuales — requiere transformar instituciones.',
+      selLink:'Entender el racismo como problema estructural — no solo personal — abre la puerta a respuestas colectivas y ciudadanas más efectivas.' },
+    { tipo:'situacion',
+      escenario:'Tu maestra le pregunta siempre primero a los mismos estudiantes: los que tienen mejor ropa, hablan con acento "urbano" y viven en las colonias "buenas". A otros los ignora aunque levanten la mano.',
+      q:'¿Qué reproduce esta práctica docente sin que quizás la maestra lo note?',
+      opts:['Los otros estudiantes deberían participar más activamente', 'Es normal — los mejores estudiantes merecen más atención', 'La maestra conoce mejor a algunos estudiantes por eso', 'La discriminación de clase dentro del aula: las desigualdades externas se reproducen en el salón cuando el trato diferencial depende del origen social, no del desempeño'], correct:3, explain:'La discriminación puede ser sutil e inconsciente. Cuando el trato diferencial en el aula sigue los mismos patrones de clase social que existen afuera, la escuela — que debería igualar — termina reproduciendo la desigualdad. Identificarlo no es atacar a la maestra: es ver el patrón.',
+      selLink:'Nombrar estos patrones — con argumentos, no con agresión — es exactamente el diálogo crítico que propone el Ámbito Ciudadano.' },
+    { tipo:'situacion',
+      escenario:'Un compañero hace una "broma" imitando el acento de los estudiantes indígenas del grupo. Varios ríen. Uno de los estudiantes indígenas sonríe incómodo pero no dice nada.',
+      q:'¿Por qué esta "broma" es más que solo humor?',
+      opts:['Es exagerado ofenderse por un chiste', 'La broma reproduce un estereotipo que ridiculiza a un grupo, genera un ambiente hostil y pone al estudiante indígena en la posición de tener que aguantar o parecer "exagerado" si protesta', 'El compañero debería conocer mejor a los estudiantes indígenas', 'Si lo dice con buena onda no hay problema — es solo su manera de llevarse'], correct:1, explain:'El "humor" racista no es inofensivo: normaliza la burla hacia un grupo y pone a la persona afectada en una posición imposible — aguantar o parecer "intenso/a". Ese mecanismo es una forma de violencia simbólica que el Ámbito Ciudadano propone interrumpir con diálogo.',
+      selLink:'Saber interrumpir situaciones discriminatorias con respeto y argumentos — sin agresión — es una habilidad ciudadana que se aprende y se practica.' },
+    { tipo:'concepto',
+      q:'¿Qué es la "discriminación indirecta" a diferencia de la directa?',
+      opts:['La que ocurre a espaldas de la víctima', 'La que ocurre en espacios privados como la familia', 'La que hacen personas de un grupo hacia otro grupo', 'La que resulta de reglas o prácticas aparentemente neutras que en la realidad perjudican más a ciertos grupos — por ejemplo, exigir hablar español perfectamente en un trabajo de una región plurilingüe'], correct:3, explain:'La discriminación indirecta es especialmente peligrosa porque se esconde detrás de "reglas iguales para todos". Exigir foto de frente sonriendo sin acento regional parece neutro, pero elimina sistemáticamente a personas con rasgos indígenas o acento "no urbano".',
+      selLink:'Detectar cuándo una regla "neutral" produce efectos desiguales es pensamiento ciudadano crítico aplicado a situaciones reales.' },
+  ]
+},
+
+{
+  semana:7, titulo:'Comunidad y resistencia', temaIdx:1,
+  preguntas:[
+    { tipo:'situacion',
+      escenario:'El gobierno quiere construir una carretera que atraviesa las parcelas de varias familias campesinas. No les avisaron con tiempo, el pago ofrecido es muy bajo y no los consultaron. Las familias se organizan para oponerse.',
+      q:'¿Qué derecho están ejerciendo estas familias al organizarse?',
+      opts:['Están obstaculizando el progreso de su región', 'El gobierno tiene derecho de construir lo que necesite', 'Ejercen el derecho a la consulta previa y a la organización civil — pueden rechazar o negociar proyectos que afecten sus tierras y medios de vida sin haber sido consultados', 'Deberían aceptar el dinero ofrecido y mudarse'], correct:2, explain:'El derecho a la consulta previa y a la organización comunitaria son reconocidos en la Constitución y en tratados internacionales. Cuando el Estado o las empresas ignoran estos derechos, la resistencia organizada es una respuesta legítima y ciudadana.',
+      selLink:'La organización comunitaria como forma de resistencia es la expresión más concreta del trabajo colaborativo que propone el Ámbito Ciudadano.' },
+    { tipo:'situacion',
+      escenario:'Un grupo de estudiantes del plantel nota que los baños están en malas condiciones desde hace meses. En lugar de quejarse por separado, forman una comisión, documentan el problema con fotos y se reúnen con la dirección formalmente.',
+      q:'¿Por qué esta forma de actuar es más efectiva que quejarse individualmente?',
+      opts:['No es más efectiva — el director siempre ignora a los estudiantes', 'La acción colectiva organizada tiene más peso: documenta el problema, muestra que afecta a muchos y usa canales institucionales — eso es más difícil de ignorar que una queja individual', 'Solo funciona si van los padres de familia', 'Los estudiantes no deberían meterse en asuntos administrativos'], correct:1, explain:'La organización colectiva amplifica la voz individual y da legitimidad a la demanda. Documentar, articular y usar canales formales son estrategias ciudadanas concretas que cualquier grupo puede aplicar — en el plantel, la colonia o el municipio.',
+      selLink:'Esta es la colaboración ciudadana en acción: identificar un problema colectivo, organizarse y actuar con argumentos.' },
+    { tipo:'concepto',
+      q:'¿Qué diferencia hay entre una "protesta" y una "resistencia organizada"?',
+      opts:['Las protestas las hacen ciudadanos y la resistencia los delincuentes', 'Son lo mismo — solo cambia el nombre', 'La protesta es una acción puntual de rechazo; la resistencia organizada implica una estrategia sostenida, con objetivos claros, acción colectiva y mecanismos para mantener la lucha en el tiempo', 'La resistencia siempre usa violencia y la protesta no'], correct:2, explain:'Una marcha es una protesta; un movimiento que lleva años con asambleas, voceros, demandas concretas y seguimiento es resistencia organizada. La segunda requiere más estructura, pero tiene mayor capacidad de transformar condiciones.',
+      selLink:'Saber cómo funciona la organización social para la resistencia es una herramienta ciudadana que puedes aplicar en cualquier escala.' },
+    { tipo:'situacion',
+      escenario:'En el municipio de Santa Ana, las mujeres indígenas crearon una cooperativa de tejidos. Venden directamente sin intermediarios, deciden juntas los precios y reinvierten las ganancias en educación de sus hijas.',
+      q:'¿Qué logra esta cooperativa más allá de generar ingresos?',
+      opts:['Solo genera dinero para las familias — nada más', 'Es un negocio pequeño sin importancia social', 'Genera autonomía económica, fortalece la organización comunitaria, preserva la cultura y mejora las oportunidades educativas de las hijas — es un satisfactor sinérgico que cubre múltiples necesidades', 'Podría ser más efectivo si el gobierno las ayudara'], correct:2, explain:'Esta cooperativa es un ejemplo de resistencia organizada y organización comunitaria que produce múltiples efectos: económicos, culturales, educativos y de autonomía. Demuestra que la organización social puede ser una respuesta poderosa a la desigualdad.',
+      selLink:'El trabajo colaborativo que genera autonomía colectiva es exactamente el tipo de ciudadanía activa que propone el Ámbito 1.' },
+    { tipo:'situacion',
+      escenario:'Cada vez que el presidente de la colonia convoca a asamblea, solo van los mismos 10 vecinos de siempre. El resto dice "para qué voy si igual no cambia nada" o "eso no es para mí".',
+      q:'¿Qué problema social refleja esta actitud y cómo afecta a la comunidad?',
+      opts:['Los que sí van deberían convencer mejor al resto', 'Los que no van tienen razón — las asambleas no sirven', 'Refleja desafección ciudadana: cuando la gente no participa porque no confía en que su voz cambie algo, el espacio de decisión queda en pocas manos y se debilita la organización comunitaria', 'Es normal — la gente está muy ocupada'], correct:2, explain:'La desafección ciudadana es consecuencia de experiencias repetidas donde la participación no produce resultados. Pero cuando nadie participa, las decisiones las toman pocos — y eso a su vez genera más desconfianza. Es un ciclo que solo se rompe con pequeñas victorias colectivas.',
+      selLink:'Entender por qué la gente no participa — sin juzgarla — es parte del diálogo honesto que propone el Ámbito Ciudadano.' },
+    { tipo:'concepto',
+      q:'¿Qué son los "movimientos sociales" y qué condiciones suelen originarlos?',
+      opts:['Acciones colectivas sostenidas de grupos que comparten una injusticia común y buscan transformar condiciones sociales, políticas o culturales — generalmente surgen cuando los canales institucionales no responden', 'Marchas organizadas por partidos políticos', 'Grupos de personas que se mueven de un lugar a otro', 'Grupos de presión que actúan a favor del gobierno'], correct:0, explain:'Los movimientos sociales surgen cuando la vía institucional no funciona. El movimiento feminista, estudiantil o indígena son ejemplos de acción colectiva organizada que ha transformado leyes y culturas. No son desorden — son formas de ciudadanía cuando el sistema falla.',
+      selLink:'Conocer cómo y por qué surgen los movimientos sociales te da herramientas para entender — y eventualmente participar en — la transformación social.' },
+  ]
+},
+
+{
+  semana:8, titulo:'¿Quién pertenece y quién queda fuera?', temaIdx:1,
+  preguntas:[
+    { tipo:'situacion',
+      escenario:'El equipo de futbol del plantel no deja jugar a Óscar porque "para eso hay que saber jugar de verdad". Óscar quiere participar pero no tiene la habilidad de los demás. El entrenador dice que solo quiere ganar.',
+      q:'¿Qué tensión social representa esta situación en el contexto de la inclusión?',
+      opts:['El entrenador tiene razón — los equipos deben ser competitivos', 'Óscar debería practicar más antes de querer entrar', 'Es su decisión como entrenador y nadie puede cuestionarla', 'Hay tensión entre el deporte como rendimiento y el deporte como derecho a la participación — excluir a quien no tiene habilidad refuerza la idea de que solo valen los "mejores"'], correct:3, explain:'Cuando el deporte prioriza solo el rendimiento, excluye a quienes más podrían beneficiarse de participar. La inclusión real implica que la participación no dependa de la habilidad — especialmente en contextos educativos donde el objetivo es el desarrollo, no la competencia.',
+      selLink:'Cuestionar quién puede participar y en qué condiciones es un ejercicio ciudadano que aplica en el deporte, el salón y la comunidad.' },
+    { tipo:'situacion',
+      escenario:'En el salón hay un estudiante que llegó hace tres meses de Guerrero. Habla diferente, no conoce las "bromas internas" del grupo y casi no lo incluyen. Los demás no lo rechazan activamente — simplemente actúan como si no existiera.',
+      q:'¿Qué forma de exclusión vive este estudiante?',
+      opts:['Vive exclusión por indiferencia: la invisibilización social puede ser tan dañina como el rechazo activo — no necesita agresión para aislar y dañar', 'Debería integrarse él solo si quiere pertenecer', 'No hay exclusión — nadie lo está molestando', 'Es normal al principio — con el tiempo se integrará'], correct:0, explain:'La exclusión no siempre es agresiva. Ignorar a alguien, no incluirlo en las conversaciones ni en los planes, es una forma de marginalización que puede ser igual de dolorosa que el rechazo explícito. Reconocerla es el primer paso para cambiarla.',
+      selLink:'El diálogo y la escucha activa hacia quien está fuera del grupo son habilidades ciudadanas que se practican — no solo se declaran.' },
+    { tipo:'concepto',
+      q:'¿Qué significa "exclusión social" en el contexto de las Ciencias Sociales?',
+      opts:['Que alguien vive solo y sin familia', 'Que alguien es expulsado de una institución', 'Que alguien no tiene amigos en su escuela', 'El proceso por el cual ciertos grupos son marginados del acceso a recursos, derechos, participación y reconocimiento social — no por decisión individual sino por mecanismos estructurales'], correct:3, explain:'La exclusión social es estructural: resulta de cómo el sistema distribuye oportunidades, reconocimiento y recursos. Una persona puede estar físicamente presente en la sociedad y estar excluida de sus beneficios — eso es lo que hacen la pobreza, el racismo y la discriminación.',
+      selLink:'Identificar mecanismos de exclusión en tu entorno — y actuar desde el diálogo — es colaboración ciudadana en acción.' },
+    { tipo:'situacion',
+      escenario:'En las fiestas del plantel, la música y las actividades siempre son las mismas. Los estudiantes de comunidades indígenas dicen que sus formas de celebrar y su música nunca aparecen.',
+      q:'¿Qué dice esto sobre la diversidad cultural en espacios escolares?',
+      opts:['Revela una tendencia a invisibilizar la diversidad cultural — cuando solo se celebran expresiones de la cultura dominante, se manda el mensaje de que las demás no tienen valor', 'Es logística — no hay tiempo para hacer eventos de cada cultura', 'La escuela tiene que usar lo que le gusta a la mayoría', 'Los estudiantes indígenas deberían adaptarse a la cultura escolar'], correct:0, explain:'La escuela que no reconoce la diversidad cultural de sus estudiantes manda un mensaje implícito: solo algunas culturas valen. Incluir expresiones diversas no es solo amabilidad — es reconocimiento de derechos culturales y construcción de pertenencia real.',
+      selLink:'Construir espacios donde todos pertenezcan — no solo los de la cultura dominante — es trabajo colaborativo ciudadano.' },
+    { tipo:'situacion',
+      escenario:'Una compañera trans del plantel evita los baños porque le da miedo la reacción de otros. Prefiere aguantarse durante toda la jornada escolar.',
+      q:'¿Qué condición está viviendo esta compañera en el espacio escolar?',
+      opts:['Es un problema de convivencia que los estudiantes deben resolver entre ellos', 'Vive exclusión estructural: el plantel no genera las condiciones de seguridad necesarias para que pueda ejercer algo tan básico como usar el baño — eso vulnera su dignidad y su derecho a la educación en condiciones iguales', 'Debería hablar con sus papás primero', 'Es su decisión personal y no tiene que ver con el plantel'], correct:1, explain:'Cuando una persona no puede usar un espacio básico por miedo a violencia o rechazo, el ambiente escolar está fallando. La inclusión real no es solo tolerancia — es garantizar condiciones de seguridad y dignidad para todos, especialmente para quienes están en posición más vulnerable.',
+      selLink:'Garantizar que todos puedan participar con seguridad y dignidad es la responsabilidad colectiva que propone el Ámbito Ciudadano.' },
+    { tipo:'concepto',
+      q:'¿Qué es la "cohesión social" y por qué es importante para una comunidad?',
+      opts:['Los vínculos de confianza, solidaridad y sentido de pertenencia que unen a los miembros de una comunidad y les permiten actuar colectivamente — sin ella, los problemas se vuelven más difíciles de resolver', 'Que haya un líder fuerte que organice a todos', 'Que todo el mundo piense igual y no haya conflictos', 'Que la comunidad tenga muchos recursos económicos'], correct:0, explain:'La cohesión social no es uniformidad — es la capacidad de actuar juntos aunque se sea diferente. Las comunidades con alta cohesión social resisten mejor las crisis, resuelven conflictos más eficazmente y generan más bienestar colectivo que las fragmentadas.',
+      selLink:'Construir cohesión en tu grupo, salón o comunidad — desde el respeto a la diferencia — es la colaboración ciudadana que propone el Ámbito 1.' },
+  ]
+},
+
+/* ── TEMA 3: FACTORES DE PRODUCCIÓN ── */
+{
+  semana:9, titulo:'Tierra, trabajo y capital', temaIdx:2,
+  preguntas:[
+    { tipo:'situacion',
+      escenario:'La familia de Beto cultiva maíz en un terreno que heredaron. Este año llegó una empresa a comprarles el terreno para construir un fraccionamiento. Les ofrecen dinero, pero si venden ya no podrán cultivar.',
+      q:'¿Qué factor de producción perderían al vender y qué consecuencias tendría eso?',
+      opts:['Perderían la tierra — su factor natural de producción. Sin ella perderían autonomía alimentaria, trabajo propio y arraigo — y quedarían dependiendo del mercado para algo que antes producían ellos mismos', 'Es una buena oportunidad — deberían aprovecharla', 'Con el dinero pueden comprar más comida que lo que producían', 'Solo perderían el terreno — pueden trabajar en otra cosa'], correct:0, explain:'La tierra no es solo un terreno con valor monetario: es factor de producción, fuente de alimentos y sustento económico. Venderla puede resolver un problema inmediato pero genera dependencia estructural a largo plazo — especialmente si el dinero se acaba.',
+      selLink:'Analizar las consecuencias a largo plazo de las decisiones económicas — no solo el beneficio inmediato — es una habilidad clave del Ámbito de Salud aplicado al bienestar económico.' },
+    { tipo:'concepto',
+      q:'¿Por qué el trabajo se considera un "factor de producción" y no solo una actividad?',
+      opts:['Porque el gobierno lo reconoce en la Constitución', 'Porque genera un salario que mueve la economía', 'Porque es el elemento que transforma los recursos naturales y el capital en bienes y servicios — sin trabajo humano, la tierra y las máquinas no producen nada por sí solas', 'Porque los sindicatos así lo definieron'], correct:2, explain:'El trabajo es el factor activo de la producción: es quien articula tierra y capital para generar algo útil. Entender esto ayuda a comprender por qué las condiciones laborales — salario, horario, seguridad — son tan importantes económica y socialmente.',
+      selLink:'Entender el valor del trabajo te permite tomar decisiones más informadas sobre tu trayectoria laboral y tus derechos.' },
+    { tipo:'situacion',
+      escenario:'Don Ramón tiene una pequeña tienda. Pide un préstamo al banco para comprar más mercancía. La tasa de interés es del 40% anual. Trabaja mucho pero casi todo lo que gana se va en pagar intereses.',
+      q:'¿Qué papel juega el capital financiero aquí y cómo afecta a Don Ramón?',
+      opts:['Es culpa de Don Ramón por pedir prestado', 'Debería buscar un banco más barato', 'El capital financiero (el crédito) le permite operar pero a un costo tan alto que extrae la mayor parte de su ganancia — así el capital se reproduce para el banco mientras Don Ramón se mantiene en el límite', 'El banco le está ayudando — sin el préstamo no podría tener mercancía'], correct:2, explain:'Cuando el costo del capital (interés) es muy alto en relación con las ganancias del trabajo, el que acumula es el dueño del capital — no el que trabaja. Esta dinámica explica por qué muchos pequeños negocios no crecen aunque trabajen mucho.',
+      selLink:'Entender cómo funciona el crédito y el capital antes de usarlos es una decisión responsable que cuida tu bienestar económico.' },
+    { tipo:'situacion',
+      escenario:'En una fábrica de ropa, las máquinas hacen ahora lo que antes hacían 30 trabajadores. La empresa produce lo mismo pero despidió a la mayoría del personal.',
+      q:'¿Qué muestra este caso sobre la relación entre capital (tecnología) y trabajo?',
+      opts:['Muestra que el capital (maquinaria y tecnología) puede sustituir trabajo humano, generando desempleo — sin políticas que acompañen ese cambio, el beneficio de la tecnología se concentra en los dueños y el costo lo pagan los trabajadores', 'Los trabajadores deberían actualizarse para operar las máquinas', 'Es culpa de los trabajadores por no adaptarse antes', 'Es el progreso — siempre que hay tecnología nueva hay mejores empleos'], correct:0, explain:'La automatización es un fenómeno real. El problema no es la tecnología en sí sino cómo se distribuyen sus beneficios: si solo mejora la ganancia del dueño mientras los trabajadores pierden el empleo, la desigualdad crece. Esta es una de las tensiones centrales del sistema productivo actual.',
+      selLink:'Entender cómo los cambios tecnológicos afectan el trabajo te ayuda a tomar decisiones más informadas sobre tu formación y tu futuro laboral.' },
+    { tipo:'situacion',
+      escenario:'Yolanda estudia una carrera técnica de 2 años para ser enfermera. Su vecina Ana se va a trabajar directo a una maquiladora al terminar la prepa. A los 5 años, Yolanda gana más y tiene más estabilidad.',
+      q:'¿Qué factor de producción desarrolló Yolanda al estudiar y cómo cambió su posición?',
+      opts:['Desarrolló su fuerza de trabajo cualificada — una forma de capital humano que le da más valor en el mercado laboral y mejores condiciones laborales a largo plazo', 'El salario depende más de la empresa que de la preparación', 'Solo ganó un papel que dice que estudió', 'Tuvo suerte de encontrar buen trabajo'], correct:0, explain:'La formación técnica o profesional desarrolla el capital humano: una forma del factor trabajo que tiene mayor valor productivo. Invertir en formación es una de las decisiones más importantes que se pueden tomar con impacto en el bienestar a largo plazo.',
+      selLink:'Decidir cómo y en qué formarte — entendiendo su impacto económico real — es una decisión responsable sobre tu trayectoria y bienestar.' },
+    { tipo:'concepto',
+      q:'¿Qué distingue al "capital" de la simple acumulación de dinero?',
+      opts:['El capital siempre pertenece a los bancos', 'El capital es dinero o recursos que se invierten para generar más valor — una máquina, un local, una inversión. El dinero guardado en un colchón no es capital porque no produce nada', 'No hay diferencia — el dinero siempre es capital', 'El capital lo define el gobierno en sus políticas económicas'], correct:1, explain:'El capital no es simplemente dinero: es dinero o recursos en movimiento que se usan para producir más. Una máquina que fabrica zapatos es capital. Un local que genera renta es capital. Entender esto ayuda a comprender por qué la concentración de capital concentra también el poder económico.',
+      selLink:'Entender qué es el capital — no solo el dinero — te da herramientas para leer mejor las condiciones económicas en las que tomas decisiones.' },
+  ]
+},
+
+{
+  semana:10, titulo:'El trabajo y su valor real', temaIdx:2,
+  preguntas:[
+    { tipo:'situacion',
+      escenario:'Carmen trabaja 10 horas diarias cosiendo ropa en casa, por pieza. Gana muy poco y no tiene seguro médico, vacaciones ni aguinaldo. La empresa que le da el trabajo dice que "no es empleada sino proveedora independiente".',
+      q:'¿Qué problema laboral ilustra la situación de Carmen?',
+      opts:['Vive precarización laboral: aunque trabaja de forma dependiente para la empresa, la clasifican como "independiente" para evitar prestaciones — eso le niega derechos laborales que le corresponden legalmente', 'Es una forma moderna y flexible de trabajar que la beneficia', 'Debería buscar un empleo formal si quiere prestaciones', 'Es su decisión trabajar así — tiene libertad de elegir'], correct:0, explain:'La "flexibilización" laboral muchas veces encubre precarización: trabajo sin prestaciones, sin seguridad social y sin estabilidad. Que formalmente sea "independiente" no elimina la dependencia real ni los derechos que le corresponden.',
+      selLink:'Conocer tus derechos laborales antes de aceptar un trabajo es una decisión que cuida tu bienestar presente y futuro.' },
+    { tipo:'situacion',
+      escenario:'Pablo trabaja en una plataforma de reparto en bicicleta. Trabaja 10 horas al día, no tiene horario fijo, no recibe seguro médico y si se accidenta, paga él. La app dice que es su "socio".',
+      q:'¿Qué revela la palabra "socio" usada por la plataforma?',
+      opts:['Que realmente es dueño de parte de la empresa', 'Es lenguaje que disfraza una relación laboral real como si fuera una asociación entre iguales — para evitar obligaciones patronales. Pablo no es socio: es trabajador sin los derechos que eso implica', 'Es un modelo innovador que le da más libertad', 'Pablo eligió esa forma de trabajar — es su responsabilidad'], correct:1, explain:'Las plataformas digitales usan lenguaje engañoso ("socio", "emprendedor") para reclasificar a trabajadores y evitar pagar prestaciones. Identificar esto es fundamental para exigir derechos laborales en la economía digital.',
+      selLink:'Leer críticamente los términos de un trabajo — antes de aceptarlo — es una habilidad de decisión responsable que protege tu bienestar.' },
+    { tipo:'concepto',
+      q:'¿Qué es el "salario mínimo" y cuál es su limitación como medida de bienestar laboral?',
+      opts:['Lo que paga el gobierno a sus empleados', 'El piso legal mínimo de remuneración — su limitación es que no siempre corresponde al costo real de vida, por lo que tenerlo no garantiza poder satisfacer todas las necesidades básicas', 'El salario que reciben todos los trabajadores en México', 'El salario promedio de los trabajadores mexicanos'], correct:1, explain:'El salario mínimo es el piso legal, no el salario justo. En muchas regiones de México, el salario mínimo no alcanza para cubrir alimentación, renta, transporte y servicios básicos de una familia. Por eso "tener trabajo" no siempre equivale a bienestar.',
+      selLink:'Evaluar si un salario realmente cubre tus necesidades — no solo si es "trabajo" — es una habilidad clave para tomar decisiones responsables.' },
+    { tipo:'situacion',
+      escenario:'En el rancho donde vive Tomás, los jornaleros agrícolas ganan 200 pesos al día trabajando de sol a sol. La empresa que vende el aguacate que ellos cosechan lo exporta a 80 pesos el kilo en Estados Unidos.',
+      q:'¿Qué revela la diferencia entre lo que ganan los jornaleros y el precio final del producto?',
+      opts:['La enorme brecha entre el valor que el trabajo genera y lo que recibe el trabajador — la mayor parte del valor del aguacate se queda en la empresa exportadora, no en quienes lo producen', 'Es normal — el mercado internacional decide los precios', 'Que los jornaleros no trabajan suficiente para ganar más', 'Los jornaleros podrían ganar más si se organizaran y exportaran ellos'], correct:0, explain:'Esta brecha entre el precio del trabajo y el precio final del producto es una de las formas más claras de distribución desigual de la riqueza. El valor lo crean los jornaleros; la riqueza la acumula quien controla la comercialización y la exportación.',
+      selLink:'Entender cómo se distribuye el valor que genera el trabajo te da una perspectiva más crítica para tomar decisiones sobre tu propio trabajo.' },
+    { tipo:'situacion',
+      escenario:'La empresa donde trabajaba el papá de Lucía cerró sin avisar. No les pagaron liquidación ni los 3 meses de salario que debían. El papá no sabía que tenía derecho a exigir ese pago ante la Junta de Conciliación.',
+      q:'¿Qué impacto tiene no conocer los derechos laborales propios?',
+      opts:['Los derechos laborales son muy complicados para que los trabajadores los entiendan', 'El gobierno debería avisar a todos sus derechos', 'La ignorancia de los derechos laborales deja a los trabajadores en posición de mayor vulnerabilidad frente a los empleadores — y eso beneficia a quienes tienen más poder en la relación', 'Es responsabilidad de cada quien conocer sus derechos'], correct:2, explain:'El desconocimiento de derechos no es un defecto personal: muchas veces se mantiene por diseño, porque trabajadores que no conocen sus derechos son más fáciles de explotar. Por eso la educación sobre derechos laborales es parte del bienestar y la ciudadanía.',
+      selLink:'Conocer tus derechos laborales antes de necesitarlos es una decisión de cuidado propio que el Ámbito 2 promueve activamente.' },
+    { tipo:'concepto',
+      q:'¿Qué significa que el trabajo sea "digno" más allá de recibir un salario?',
+      opts:['Que sea un trabajo de oficina o profesional', 'Que el trabajador esté contento con lo que hace', 'Que el trabajo sea bien pagado únicamente', 'Que se realice en condiciones que respeten la salud física y mental del trabajador, con derechos garantizados, sin discriminación, con posibilidad de desarrollo y con un ingreso suficiente para una vida digna'], correct:3, explain:'El trabajo digno es un concepto que va mucho más allá del salario. Incluye condiciones de seguridad, respeto, no discriminación, seguridad social y posibilidades de desarrollo. Sin esas condiciones, un trabajo puede ser explotación aunque se pague.',
+      selLink:'Saber qué es un trabajo digno — antes de aceptar uno — es la base de las decisiones responsables sobre tu vida laboral que promueve el Ámbito 2.' },
+  ]
+},
+
+{
+  semana:11, titulo:'¿Quién produce y quién se queda con qué?', temaIdx:2,
+  preguntas:[
+    { tipo:'situacion',
+      escenario:'Una empresa de refrescos extrae millones de litros de agua de un acuífero en Jalisco, prácticamente gratis, con permiso del gobierno. Las comunidades cercanas tienen problemas de abasto de agua.',
+      q:'¿Qué revela esta situación sobre el control de los recursos naturales?',
+      opts:['El agua es de todos y la empresa tiene el mismo derecho', 'Muestra cómo el capital privado puede apropiarse de recursos naturales comunes con apoyo del Estado, transfiriendo el costo a las comunidades — eso es distribución desigual de los beneficios de la producción', 'Las comunidades deberían ahorrar más agua', 'Es normal — la empresa paga impuestos y genera empleos'], correct:1, explain:'Cuando una empresa extrae un recurso colectivo prácticamente sin costo y lo convierte en ganancia privada, mientras las comunidades sufren escasez, hay una apropiación privada de lo común. Eso no es "mercado libre" — es una relación de poder sobre los recursos naturales.',
+      selLink:'Ver cómo los recursos naturales se distribuyen — y quién decide eso — te ayuda a tomar decisiones más informadas como ciudadano/a y consumidor/a.' },
+    { tipo:'concepto',
+      q:'¿Qué es la "plusvalía" expresada en términos cotidianos, sin necesidad de términos técnicos?',
+      opts:['El aumento de sueldo que recibe un trabajador por buen desempeño', 'El dinero que el gobierno cobra como impuesto', 'La diferencia entre lo que un trabajador produce y lo que recibe como salario — esa diferencia es la que se queda el dueño como ganancia', 'El precio extra que se le pone a un producto de lujo'], correct:2, explain:'Si produces ropa que se vende en 500 pesos y recibes 80 de salario, la diferencia es la ganancia del dueño. Eso es lo que se llama plusvalía en términos sencillos. No es "robo" en sentido legal, pero explica cómo la desigualdad se reproduce en el proceso productivo.',
+      selLink:'Entender cómo se distribuye el valor que generas con tu trabajo te da una perspectiva más realista para evaluar oportunidades laborales.' },
+    { tipo:'situacion',
+      escenario:'En México, el 10% más rico concentra más del 60% de la riqueza. El 50% más pobre comparte apenas el 10%. Estos datos del INEGI llevan décadas siendo similares.',
+      q:'¿Qué nos dice la estabilidad de este patrón a lo largo del tiempo?',
+      opts:['Que la desigualdad en la distribución de la riqueza no es accidental ni temporal — es un resultado estructural del sistema económico que se reproduce aunque cambien los gobiernos', 'Es un dato que varía mucho según cómo se mida', 'Con el tiempo la desigualdad se irá reduciendo sola', 'Que los ricos siempre han trabajado más que los demás'], correct:0, explain:'Cuando la desigualdad persiste durante décadas con patrones similares, no puede explicarse solo por diferencias de esfuerzo o talento. Es el resultado de reglas del sistema — fiscales, laborales, de acceso a capital — que favorecen consistentemente a quienes ya tienen más.',
+      selLink:'Leer datos de desigualdad con ojos críticos — sin naturalizarlos — te ayuda a tomar decisiones de vida con una visión más realista del contexto.' },
+    { tipo:'situacion',
+      escenario:'Los padres de Milagros son trabajadores agrícolas. Ella sabe que en su familia el dinero nunca alcanza aunque todos trabajan duro. En la escuela le dicen que "estudia y saldrás adelante".',
+      q:'¿Qué parte de verdad y qué parte de simplificación tiene ese consejo?',
+      opts:['Milagros debería buscar una beca y creerle al consejo', 'La parte de verdad: la educación amplía opciones. La simplificación: ignora que sin condiciones estructurales acompañando — mercado laboral justo, redes de contacto, recursos — el esfuerzo educativo solo no garantiza superar la desigualdad de origen', 'Es falso — la educación no sirve de nada', 'Es 100% verdad — la educación garantiza el éxito'], correct:1, explain:'La educación sí amplía posibilidades — pero no es una varita mágica que borra la desigualdad estructural. Entender eso no es pesimismo: es tener expectativas realistas y saber qué otros factores — laborales, sociales, económicos — también importan en el camino.',
+      selLink:'Planificar tu trayectoria educativa y laboral con una visión completa — no solo con el "esfuerzo" como única variable — es una decisión responsable que cuida tu bienestar a largo plazo.' },
+    { tipo:'situacion',
+      escenario:'Una empresa de tecnología genera miles de millones de ganancias pero paga muy pocos impuestos porque registra sus ganancias en un país con impuestos más bajos.',
+      q:'¿Qué dice esto sobre quién paga y quién no paga por el funcionamiento del Estado?',
+      opts:['La empresa está haciendo lo que cualquiera haría para pagar menos', 'El Estado debería gastar menos para no necesitar tantos impuestos', 'Es un problema solo de ese país con impuestos bajos', 'Cuando las empresas más grandes evaden o eluden impuestos, el costo del Estado lo terminan pagando más los trabajadores y las pequeñas empresas — es una distribución desigual de la carga fiscal'], correct:3, explain:'La evasión y la elusión fiscal de grandes corporaciones transfieren la carga impositiva hacia quienes tienen menos poder de negociación: trabajadores y pequeñas empresas. Eso es otra dimensión de cómo la riqueza se concentra y el costo se socializa.',
+      selLink:'Entender quién financia el Estado — y quién no — te da una perspectiva crítica sobre el sistema en el que tomas tus decisiones económicas.' },
+    { tipo:'concepto',
+      q:'¿Qué significa "modo de producción" en términos simples?',
+      opts:['La cantidad de bienes que produce un país al año', 'La técnica que usa una fábrica para fabricar sus productos', 'La forma en que una sociedad organiza quién es dueño de los medios de producción, quién trabaja y cómo se distribuye lo que se produce — eso determina las relaciones sociales básicas', 'El proceso de fabricación de un bien específico'], correct:2, explain:'El modo de producción no es solo tecnología — es el arreglo social de quién tiene qué y quién hace qué. En el modo capitalista, unos poseen los medios y otros venden su trabajo. En otros modos, esa relación se organiza diferente. El modo de producción moldea cómo vive la gente.',
+      selLink:'Entender el modo de producción en el que vives te da contexto para leer mejor las condiciones económicas que enfrentas y las decisiones que puedes tomar.' },
+  ]
+},
+
+{
+  semana:12, titulo:'Economía en tu vida diaria', temaIdx:2,
+  preguntas:[
+    { tipo:'situacion',
+      escenario:'El precio de la canasta básica subió 15% este año. El salario de la mamá de Renata subió 5%. Aunque trabaja igual, pueden comprar menos.',
+      q:'¿Qué fenómeno económico está afectando el poder adquisitivo de esta familia?',
+      opts:['La familia debería gastar menos en cosas innecesarias', 'Es solo un problema temporal que se resuelve solo', 'La inflación: cuando los precios suben más rápido que los salarios, el poder de compra cae aunque el ingreso aumente en números — eso es una pérdida real del nivel de vida', 'La mamá debería pedir aumento en su trabajo'], correct:2, explain:'La inflación es una forma silenciosa en que las familias empobrecen sin que nadie les quite dinero directamente. Cuando los precios suben más que los salarios, el trabajador produce lo mismo pero puede comprar menos. El impacto es especialmente fuerte en familias con ingresos fijos.',
+      selLink:'Entender la inflación y su impacto real en tu familia es una habilidad que te ayuda a tomar decisiones económicas más informadas.' },
+    { tipo:'situacion',
+      escenario:'Daniela quiere comprar una pantalla a crédito. La tienda le ofrece "12 meses sin intereses". Pero la letra pequeña dice que si se atrasa en un pago, los intereses se calculan desde el inicio al 80% anual.',
+      q:'¿Por qué Daniela debe leer la letra pequeña antes de firmar?',
+      opts:['La empresa no puede cobrar eso si el contrato dice "sin intereses"', 'Porque las condiciones del crédito pueden cambiar drásticamente si ocurre un imprevisto — firmar sin leer la letra pequeña puede convertir una compra "sin intereses" en una deuda que tarda años en pagarse', 'No importa — si paga a tiempo no hay problema', 'Es responsabilidad del vendedor explicarle todo'], correct:1, explain:'Los créditos "sin intereses" muchas veces tienen condiciones trampa. Leer los contratos antes de firmar es una habilidad básica de protección al consumidor y de manejo responsable del dinero — especialmente cuando el costo de un error es muy alto.',
+      selLink:'Tomar decisiones financieras informadas — leyendo lo que firmas — es una expresión concreta de cuidado propio y responsabilidad que promueve el Ámbito 2.' },
+    { tipo:'concepto',
+      q:'¿Qué es el "mercado informal" y por qué es tan grande en México?',
+      opts:['El conjunto de actividades económicas que operan fuera del registro y la regulación del Estado — en México es enorme porque el sector formal no genera suficientes empleos con condiciones dignas para toda la población', 'Los mercados que no tienen techo ni instalaciones fijas', 'El comercio en mercados públicos municipales', 'Las ventas que se hacen sin facturas por decisión del vendedor'], correct:0, explain:'La informalidad no es una elección: muchas veces es la única opción cuando el mercado formal no tiene suficiente empleo digno. En México más del 55% de los trabajadores están en la informalidad — sin seguridad social, sin derechos laborales plenos y sin estabilidad.',
+      selLink:'Entender por qué existe la informalidad — y sus consecuencias para quienes trabajan en ella — te ayuda a evaluar mejor las opciones laborales que tendrás disponibles.' },
+    { tipo:'situacion',
+      escenario:'Héctor recibe su primer sueldo y gasta todo en ropa y salidas. A fin de mes no tiene para el camión. El siguiente mes hace lo mismo.',
+      q:'¿Qué habilidad le haría falta desarrollar a Héctor para tomar mejores decisiones?',
+      opts:['Debería pedir a sus papás que le ayuden a administrar su dinero', 'Es normal al principio — con el tiempo aprenderá', 'Debería ganar más dinero antes de poder ahorrar', 'Planificación financiera básica: diferenciar necesidades de gastos prescindibles, hacer un presupuesto y guardar algo antes de gastar — habilidades que no se enseñan pero son fundamentales para el bienestar económico'], correct:3, explain:'La educación financiera básica — cómo hacer un presupuesto, diferenciar necesidad de deseo, entender el crédito — no suele enseñarse formalmente. Y su ausencia tiene consecuencias reales. No es culpa de Héctor no saber algo que nunca le enseñaron: pero sí puede aprenderlo.',
+      selLink:'Desarrollar habilidades de planificación financiera es una forma concreta de cuidarte a ti mismo/a y tomar decisiones responsables sobre tu bienestar.' },
+    { tipo:'situacion',
+      escenario:'En tu colonia, la única tienda grande es una cadena transnacional. Cuando llegó, cerró casi todas las tiendas de abarrotes locales. Ahora todos compran ahí, aunque hay cosas que antes solo tenían los abarrotes.',
+      q:'¿Qué efecto tuvo la cadena transnacional en la economía local?',
+      opts:['Los abarrotes cerraron porque no eran buenos', 'Concentró el comercio y desplazó a los pequeños negocios locales — lo que reduce la circulación del dinero en la comunidad y aumenta la dependencia de una sola empresa', 'Es el mercado libre funcionando correctamente', 'Mejoró la economía porque bajó precios y hay más variedad'], correct:1, explain:'Cuando el dinero de una comunidad va a una cadena transnacional, sale de ella. Cuando va a un negocio local, circula: paga al dueño, que compra en la carnicería, que paga a su proveedor local. La concentración comercial tiene efectos económicos reales en la comunidad.',
+      selLink:'Entender dónde y cómo gastas tu dinero — y qué efectos tiene — es parte de las decisiones responsables que promueve el Ámbito 2.' },
+    { tipo:'concepto',
+      q:'¿Qué es la "distribución del ingreso" y por qué se mide con el coeficiente de Gini?',
+      opts:['La cantidad de impuestos que paga cada persona', 'El total de dinero que produce un país en un año', 'El número de personas que trabajan en un país', 'La forma en que se reparte la riqueza generada entre los miembros de una sociedad — el coeficiente de Gini mide qué tan desigual es esa distribución: 0 sería distribución perfectamente igual, 1 sería que una persona tiene todo'], correct:3, explain:'El Gini es una herramienta para medir desigualdad de forma comparable. México tiene uno de los Ginis más altos de América Latina — lo que indica alta concentración del ingreso. Conocer estas herramientas permite leer la realidad económica con más precisión.',
+      selLink:'Leer indicadores económicos te da herramientas para entender tu contexto — y tomar decisiones de vida más informadas.' },
+  ]
+},
+
+/* ── TEMA 4: RELACIONES DE PODER ── */
+{
+  semana:13, titulo:'El poder que no se ve', temaIdx:3,
+  preguntas:[
+    { tipo:'situacion',
+      escenario:'En tu plantel siempre hubo un grupo de estudiantes que "manda" informalmente: deciden quién es popular, qué está de moda y a quién se incluye. Nadie los eligió — simplemente "así es".',
+      q:'¿Cómo funciona el poder en este caso sin que haya reglas formales?',
+      opts:['Cualquiera podría quitarles ese poder si quisiera', 'Es solo una fase de la adolescencia sin consecuencias', 'El poder informal opera a través del reconocimiento colectivo y la aceptación social: ese grupo controla recursos simbólicos (popularidad, pertenencia) sin necesidad de una posición oficial — eso es poder social real', 'No es poder real — solo son populares'], correct:2, explain:'El poder no siempre necesita un cargo o una ley. El poder informal opera con recursos simbólicos: reconocimiento, pertenencia, reputación. Identificarlo es el primer paso para no reproducirlo sin cuestionarlo.',
+      selLink:'Reconocer cómo opera el poder en los espacios cotidianos — el salón, la familia, el grupo — activa el análisis de género y poder del Ámbito 4.' },
+    { tipo:'situacion',
+      escenario:'Cada vez que hay una reunión importante en el plantel — con autoridades o padres de familia — quien habla siempre es el director hombre. Las maestras, aunque son mayoría y tienen más experiencia, casi no toman la palabra.',
+      q:'¿Qué patrón de poder está reproduciendo esta dinámica?',
+      opts:['En una institución alguien tiene que llevar la voz', 'Las maestras no quieren hablar — es su decisión', 'Reproduce un patrón de género donde la voz masculina ocupa el espacio público de decisión aunque no sea la más preparada — eso es poder de género operando en una institución', 'El director habla porque es el responsable del plantel'], correct:2, explain:'Cuando consistentemente las voces masculinas ocupan el espacio de decisión y las femeninas se marginan — aunque sean mayoría o más calificadas — estamos ante poder de género institucionalizado. No requiere intención: se reproduce por patrones aprendidos.',
+      selLink:'Identificar cómo el género determina quién habla, quién decide y quién calla es el corazón del propósito formativo del Ámbito 4.' },
+    { tipo:'concepto',
+      q:'¿Qué es el "poder simbólico" y cómo opera en la vida cotidiana?',
+      opts:['El poder que tienen los símbolos religiosos', 'El poder que ejercen los artistas y creadores', 'La capacidad de imponer una visión del mundo como "la normal" o "la natural" — opera cuando ciertos grupos logran que sus valores, estética o formas de vida se asuman como estándar para todos', 'El poder que tienen los medios de comunicación únicamente'], correct:2, explain:'El poder simbólico es invisible pero muy efectivo: cuando la cultura dominante se convierte en "lo normal" y todo lo demás es "raro", ese es poder simbólico en acción. Los anuncios que muestran solo ciertos cuerpos, las novelas que solo cuentan ciertas historias — todo eso moldea quién se siente incluido.',
+      selLink:'Identificar el poder simbólico en la cultura, los medios y el lenguaje cotidiano es una herramienta del análisis de género y poder del Ámbito 4.' },
+    { tipo:'situacion',
+      escenario:'En las noticias siempre presentan a los políticos corruptos como "individuos malos". Rara vez explican las estructuras — los sistemas de financiamiento, los lazos con empresas, la falta de mecanismos de control — que hacen posible esa corrupción.',
+      q:'¿Por qué enfocarse solo en los individuos malos puede ser problemático para entender la corrupción?',
+      opts:['La corrupción siempre es solo responsabilidad individual', 'Porque oculta las estructuras que hacen posible la corrupción: si el problema fueran solo personas malas, cambiar personas bastaría — pero la corrupción sistémica requiere cambiar reglas, instituciones y controles, no solo funcionarios', 'Las estructuras no importan si hay voluntad política', 'No es problemático — los responsables deben ser señalados'], correct:1, explain:'La narrativa del "individuo malo" es cómoda porque no exige cambiar nada estructural. Pero si el sistema permite o incentiva la corrupción, cambiar personas sin cambiar las reglas produce los mismos resultados con caras diferentes. El análisis de poder requiere ver más allá de los personajes.',
+      selLink:'Ver las estructuras detrás de los problemas — no solo los individuos — es pensamiento crítico sobre el poder que activa el análisis del Ámbito 4.' },
+    { tipo:'situacion',
+      escenario:'Una empresa de cosméticos lanza una campaña con el mensaje: "Sé tú misma — úsanos". El mensaje de autonomía está dentro de un anuncio que vende un producto.',
+      q:'¿Qué tensión existe en este mensaje?',
+      opts:['Hay una contradicción: el discurso de autonomía individual se usa como estrategia comercial — te dice "sé tú misma" mientras te vende la idea de que para serlo necesitas su producto. El poder de mercado se disfraza de empoderamiento.', 'La empresa está siendo honesta con sus consumidoras', 'Ninguna — el marketing solo quiere conectar con las consumidoras', 'Es un mensaje positivo aunque sea publicidad'], correct:0, explain:'El "femvertising" usa el lenguaje del empoderamiento para vender. No es empoderamiento real — es poder de mercado que coloniza el discurso feminista para convertirlo en consumo. Identificar esa tensión es pensamiento crítico sobre el poder simbólico.',
+      selLink:'Leer críticamente los mensajes que te llegan — aunque parezcan positivos — es una habilidad del análisis de género y poder que propone el Ámbito 4.' },
+    { tipo:'concepto',
+      q:'¿Qué significa que las relaciones de poder sean "asimétricas"?',
+      opts:['Que el poder se reparte de forma diferente en cada país', 'Que no hay equilibrio: una parte tiene significativamente más capacidad de influir, decidir o imponer que la otra — y esa asimetría se reproduce en las instituciones, el lenguaje y las prácticas cotidianas', 'Que el poder cambia constantemente y nunca es estable', 'Que algunas personas son naturalmente más poderosas que otras'], correct:1, explain:'Las relaciones asimétricas de poder son la regla, no la excepción. Entre empleador y empleado, entre Estado y ciudadano, entre hombre y mujer en ciertos contextos — la asimetría determina quién puede más. Reconocerla es condición para transformarla.',
+      selLink:'Identificar dónde están las asimetrías de poder en tu vida — sin naturalizarlas — es el primer paso del análisis crítico que propone el Ámbito 4.' },
+  ]
+},
+
+{
+  semana:14, titulo:'Género y poder en lo cotidiano', temaIdx:3,
+  preguntas:[
+    { tipo:'situacion',
+      escenario:'En el trabajo de verano de Ivonne, su jefe le da más tareas administrativas y le pide que sirva el café en las reuniones. A sus compañeros hombres con el mismo puesto no les pide eso.',
+      q:'¿Qué forma de discriminación de género está viviendo Ivonne?',
+      opts:['El jefe solo está asignando tareas según las habilidades de cada uno', 'Es parte de la dinámica de las empresas — hay que adaptarse', 'Debería hablar con el jefe si no le gusta', 'Ivonne enfrenta discriminación de género: se le asignan tareas estereotipadamente "femeninas" fuera de su función, lo que devalúa su trabajo y reproduce la idea de que las mujeres están ahí para servir'], correct:3, explain:'Asignar tareas "de servicio" a mujeres en contextos laborales mixtos es una forma de micromachismo que devalúa su rol profesional y refuerza la idea de que su función es cuidar y servir. No requiere intención explícita para causar daño.',
+      selLink:'Identificar formas de discriminación de género en el trabajo — incluyendo las sutiles — activa directamente el propósito formativo del Ámbito 4.' },
+    { tipo:'situacion',
+      escenario:'Carlos quiere estudiar enfermería pero sus familiares le dicen que "eso es para mujeres" y que debería estudiar algo "de hombres". Él se siente presionado aunque le apasiona el área de salud.',
+      q:'¿Qué mecanismo social está limitando a Carlos?',
+      opts:['Es una decisión personal que solo le compete a él y su familia', 'Sus familiares solo quieren lo mejor para él', 'Los mandatos de género: expectativas sociales sobre qué carreras, emociones y roles son "apropiados" para hombres — limitan la libertad de Carlos igual que limitan a las mujeres, aunque de formas distintas', 'Carlos debería encontrar una carrera más adecuada a su género'], correct:2, explain:'Los mandatos de género no solo limitan a las mujeres. Carlos no puede elegir libremente su vocación porque enfrenta presión para que su identidad encaje con lo que "un hombre debe hacer". Eso es poder de género operando sobre él.',
+      selLink:'Ver cómo los mandatos de género limitan tanto a hombres como a mujeres — aunque de formas distintas — es parte del análisis del Ámbito 4.' },
+    { tipo:'concepto',
+      q:'¿Qué es la "brecha salarial de género" y por qué existe más allá de la discriminación directa?',
+      opts:['Que los jefes pagan menos a las mujeres porque son machistas', 'La diferencia sistemática en los ingresos promedio de hombres y mujeres — causada por factores como la segregación ocupacional, las interrupciones de carrera por maternidad y la devaluación de empleos "feminizados", no solo por discriminación directa', 'Que las mujeres eligen trabajos que pagan menos', 'Que las mujeres trabajan menos horas en promedio'], correct:1, explain:'La brecha salarial tiene múltiples causas: las mujeres se concentran en sectores históricamente peor pagados, interrumpen carreras por cargas de cuidado no remuneradas y enfrentan techo de cristal en ascensos. No es solo discriminación directa — es el resultado de un sistema que devalúa lo femenino.',
+      selLink:'Entender la brecha salarial te permite evaluar mejor las condiciones laborales que enfrentarás — y los derechos que puedes exigir.' },
+    { tipo:'situacion',
+      escenario:'En el salón, cuando hay debate, los compañeros hombres interrumpen frecuentemente a las compañeras. Cuando ellas replican lo mismo que un hombre dijo antes, no les hacen caso. Cuando un hombre lo repite, todos asienten.',
+      q:'¿Cómo se llama este fenómeno y qué produce?',
+      opts:['Se llama "manterrupting" y "hepeating" — formas de silenciamiento de género que reducen la participación femenina en espacios de debate y refuerzan la idea de que la voz masculina tiene más autoridad', 'Es que los hombres participan con más seguridad — por eso los escuchan más', 'Las mujeres deberían hablar con más fuerza para que las escuchen', 'Es algo normal en debates grupales — no tiene que ver con el género'], correct:0, explain:'Interrumpir sistemáticamente a mujeres y repetir sus ideas acreditándoselas a hombres son formas de silenciamiento de género en espacios públicos. No siempre es consciente — pero tiene el efecto de desincentivar la participación femenina y validar solo ciertas voces.',
+      selLink:'Identificar estas dinámicas en tu propio salón — y actuar para cambiarlas — es aplicar el Ámbito 4 en tu vida cotidiana.' },
+    { tipo:'situacion',
+      escenario:'La mamá de Fernanda trabaja fuera de casa y cuando llega, también cocina, limpia y cuida a los hijos. Su papá trabaja igual de horas pero cuando llega, descansa. Todos lo asumen como normal.',
+      q:'¿Qué fenómeno social describe la situación de la mamá de Fernanda?',
+      opts:['Es una decisión de pareja que tomaron ellos', 'La "doble jornada" o "segunda jornada": las mujeres realizan trabajo remunerado más trabajo doméstico y de cuidado no remunerado — mientras los hombres tienden a asumir menos carga doméstica, aunque ambos trabajen igual fuera', 'La mamá es más responsable y por eso hace más', 'El papá debería ayudar más — es un problema de esa familia en particular'], correct:1, explain:'La doble jornada es un fenómeno estructural de género: el trabajo doméstico y de cuidado históricamente no remunerado recae desproporcionadamente sobre las mujeres. Que "todos lo asuman como normal" es el poder simbólico naturalizando una desigualdad real.',
+      selLink:'Ver el trabajo de cuidado como trabajo real — y cuestionarse cómo se distribuye — es parte del análisis de género que propone el Ámbito 4.' },
+    { tipo:'concepto',
+      q:'¿Qué es el "techo de cristal" en el ámbito laboral?',
+      opts:['Una técnica de arquitectura en edificios de oficinas', 'Una ley que impide a las mujeres ser directoras', 'La barrera invisible que impide a mujeres y grupos minoritarios alcanzar posiciones de liderazgo en las organizaciones — no está en las reglas formales sino en prácticas, prejuicios y redes de poder informales', 'El límite de crecimiento que tiene cualquier empresa'], correct:2, explain:'El techo de cristal no está en ningún reglamento — por eso es invisible. Se manifiesta en que las mujeres acceden a cargos medios pero rara vez a los más altos, aunque tengan la misma preparación. Es poder de género operando en las instituciones.',
+      selLink:'Conocer el techo de cristal te permite anticipar barreras reales en tu trayectoria y planificar cómo responder a ellas.' },
+  ]
+},
+
+{
+  semana:15, titulo:'Interseccionalidad en situaciones reales', temaIdx:3,
+  preguntas:[
+    { tipo:'situacion',
+      escenario:'Marina es mujer, tiene 19 años, vive en una zona rural, es indígena y trabaja en el campo. Cuando va al hospital, el trato que recibe es diferente al que recibe una mujer joven de ciudad.',
+      q:'¿Cómo explica el análisis interseccional la experiencia de Marina?',
+      opts:['La interseccionalidad muestra que Marina no enfrenta una sola desventaja sino varias al mismo tiempo: ser mujer, ser joven, ser indígena y vivir en zona rural se combinan y amplifican — produciendo una experiencia de discriminación más intensa que cualquiera de esas condiciones por separado', 'Es un caso individual sin importancia estructural', 'Es solo que el hospital rural tiene menos recursos', 'El problema es solo de género — si fuera hombre la atenderían igual'], correct:0, explain:'La interseccionalidad no es una suma simple: las condiciones no se suman sino que interactúan y se amplifican. Marina no enfrenta discriminación "de género más discriminación étnica más discriminación territorial" — enfrenta algo cualitativamente diferente que resulta de su combinación específica.',
+      selLink:'El análisis interseccional es la herramienta central del Ámbito 4 para entender formas complejas de desigualdad que no pueden verse desde una sola dimensión.' },
+    { tipo:'situacion',
+      escenario:'En el mismo trabajo, hay dos personas en situación migratoria irregular: un hombre europeo y una mujer latinoamericana. El primero es visto como "aventurero". Ella es señalada con sospechas y frecuentemente acosada.',
+      q:'¿Qué muestra la diferencia en el trato que reciben?',
+      opts:['Es solo que tienen personalidades distintas', 'Que la misma condición migratoria produce experiencias radicalmente distintas según el género, el origen y la apariencia — el análisis interseccional muestra que no existe una experiencia única de la migración', 'El hombre europeo probablemente habla mejor el idioma', 'Es culpa del entorno laboral en ese país específico'], correct:1, explain:'La misma condición migratoria irregular produce experiencias completamente distintas cuando se combina con el género y el origen étnico. Esto muestra que no podemos analizar la migración — ni ninguna condición social — sin considerar las múltiples dimensiones que interactúan.',
+      selLink:'Ver cómo las mismas condiciones producen experiencias distintas según el género, el origen y la clase es el análisis interseccional que propone el Ámbito 4.' },
+    { tipo:'concepto',
+      q:'¿Por qué la interseccionalidad es más útil para entender la desigualdad que analizar solo una dimensión a la vez?',
+      opts:['Porque el gobierno así lo pide en sus políticas de igualdad', 'Porque es más complicado y así parece más serio', 'Porque permite escribir informes más detallados', 'Porque las personas no somos una sola cosa: somos mujer y joven e indígena y pobre al mismo tiempo — y esas condiciones interactúan produciendo experiencias que no pueden entenderse si se analiza solo el género, o solo la clase, o solo la etnia por separado'], correct:3, explain:'La interseccionalidad reconoce que las personas somos simultáneamente varias cosas. Analizar solo el género puede ocultar diferencias de clase; analizar solo la clase puede ocultar el racismo. La combinación produce algo diferente que requiere un análisis también diferente.',
+      selLink:'Este es el marco analítico central del Ámbito 4: ver las múltiples dimensiones que determinan las experiencias de poder y desventaja.' },
+    { tipo:'situacion',
+      escenario:'Dos estudiantes del mismo plantel tienen notas similares. Uno es hombre de clase media con papás profesionistas. La otra es mujer de familia trabajadora. Al buscar trabajo, él recibe más llamadas de entrevista aunque los CVs son iguales.',
+      q:'¿Qué factores intersectan para producir esta diferencia en el mercado laboral?',
+      opts:['El género y la clase social se intersectan: los empleadores — consciente o no — aplican sesgos que favorecen a quien se percibe más "seguro" y "confiable", categorías que se asocian a hombres de cierta clase — aunque el desempeño sea igual', 'Es solo mala suerte de ella', 'Ella debería mejorar su CV o su forma de presentarse', 'La empresa eligió al hombre porque tiene mejor actitud'], correct:0, explain:'Los sesgos de contratación raramente son explícitos pero son documentados: el mismo CV con nombre masculino recibe más llamadas que con nombre femenino. La combinación de género y clase social intersectan para producir ventajas y desventajas en el mercado.',
+      selLink:'Entender estos sesgos — y cómo operan — te prepara para navigarlos con más información en tu propia búsqueda de trabajo.' },
+    { tipo:'situacion',
+      escenario:'Un programa de gobierno para mujeres emprendedoras requiere: cuenta bancaria, RFC, domicilio fijo y comprobante de ingresos. Muchas mujeres de comunidades rurales no tienen ninguno de esos documentos.',
+      q:'¿Qué problema tiene este programa aunque su intención sea buena?',
+      opts:['El gobierno debería simplificar más los trámites para todos', 'Las mujeres rurales tienen otras formas de apoyarse', 'El programa fue diseñado pensando en mujeres urbanas con acceso al sistema formal — las barreras de acceso excluyen a las más vulnerables, que son quienes más necesitan el apoyo. La buena intención no basta si el diseño reproduce exclusión', 'El problema es que las mujeres rurales no están organizadas para acceder'], correct:2, explain:'Las políticas que no consideran las condiciones interseccionales de sus beneficiarias terminan llegando a quienes menos las necesitan. Un programa para mujeres que excluye a las más pobres, rurales e informales no solo falla — reproduce la desigualdad que dice combatir.',
+      selLink:'El análisis interseccional no es solo teórico: sirve para diseñar — y exigir — políticas que realmente lleguen a quienes más las necesitan.' },
+    { tipo:'concepto',
+      q:'¿Qué significa que una política pública sea "interseccionalmente ciega"?',
+      opts:['Que fue diseñada sin considerar cómo las distintas condiciones de sus beneficiarios — género, clase, etnia, edad, territorio — interactúan, lo que genera que sus beneficios lleguen de forma desigual o que excluya a quienes más los necesitan', 'Que fue hecha por personas que no conocen el tema', 'Que no tiene presupuesto suficiente', 'Que no tiene datos sobre el tema que atiende'], correct:0, explain:'Una política ciega a la interseccionalidad puede tener buenas intenciones y malos resultados. Si diseñas un programa "para las mujeres" sin preguntar qué mujeres, en qué condiciones y con qué barreras, probablemente llegues a las que ya tienen más recursos para acceder.',
+      selLink:'Entender este concepto te permite leer críticamente las políticas públicas que afectan tu vida y exigir que sean más efectivas.' },
+  ]
+},
+
+{
+  semana:16, titulo:'Poder, medio ambiente y resistencia', temaIdx:3,
+  preguntas:[
+    { tipo:'situacion',
+      escenario:'Una empresa minera contamina el río de una comunidad indígena. El gobierno dice que el proyecto cumple con la ley. La comunidad dice que nadie les preguntó y que el río es su sustento. Llevan años en juicio.',
+      q:'¿Qué tensión de poder ilustra este conflicto?',
+      opts:['Es un problema legal que los jueces deben resolver', 'La empresa solo está siguiendo las reglas del mercado', 'La comunidad debería aceptar la compensación económica ofrecida', 'El conflicto muestra cómo el poder económico y el Estado se alían para definir qué es "legal" y qué es "desarrollo" — mientras la comunidad, sin ese poder, lucha por defender lo que para ella es vida y derecho'], correct:3, explain:'Este tipo de conflicto socioambiental es un conflicto de poder: quién decide qué se extrae, de dónde y a qué costo para quién. Que algo sea legal no lo hace justo — especialmente cuando las leyes las hacen quienes tienen poder y afectan a quienes no lo tienen.',
+      selLink:'Ver los conflictos ambientales como conflictos de poder — no solo problemas técnicos — es el análisis que propone el Ámbito 4 y toda la materia de CS2.' },
+    { tipo:'situacion',
+      escenario:'El cambio climático afecta más a países pobres del sur global aunque han emitido mucho menos carbono que los países industrializados del norte. Las comunidades más afectadas son las que menos han contribuido al problema.',
+      q:'¿Qué concepto describe esta distribución desigual de las consecuencias ambientales?',
+      opts:['Justicia climática: la injusticia de que quienes menos han causado el problema son quienes más sufren sus consecuencias — eso es una expresión global de las relaciones de poder entre naciones ricas y pobres', 'Es solo mala geografía — algunos países están en zonas más vulnerables', 'El clima afecta igual a todos los países del mundo', 'Los países pobres deben adaptarse — es su responsabilidad'], correct:0, explain:'La justicia climática nombra la contradicción: los países que más emitieron CO₂ históricamente tienen más recursos para adaptarse; los que emitieron menos, sufren más y tienen menos capacidad de respuesta. Es desigualdad global expresada en términos ambientales.',
+      selLink:'Conectar las relaciones de poder globales con los efectos ambientales locales es el tipo de análisis crítico que cierra este semestre de CS2.' },
+    { tipo:'concepto',
+      q:'¿Qué es el "extractivismo" y por qué genera conflictos socioambientales?',
+      opts:['La exportación de productos agrícolas a otros países', 'Un modelo económico que basa el crecimiento en la extracción intensiva de recursos naturales — genera conflictos porque los beneficios económicos se concentran en pocas manos o se exportan, mientras el daño ambiental y social lo pagan las comunidades locales', 'La técnica para extraer minerales con maquinaria pesada', 'Un modelo solo aplicable a países petroleros'], correct:1, explain:'El extractivismo no es solo minería: incluye petróleo, agua, tierras agrícolas y bosques. El patrón es siempre similar: alguien con capital y poder político extrae, los beneficios salen de la comunidad, y el daño ambiental queda. Eso explica por qué genera tanta resistencia organizada.',
+      selLink:'Entender el extractivismo conecta los temas de producción, poder y medio ambiente que hemos trabajado a lo largo del semestre.' },
+    { tipo:'situacion',
+      escenario:'Un grupo de jóvenes de tu plantel decide hacer una campaña sobre el agua en su comunidad: investigan, hacen carteles, hablan con vecinos y piden una reunión con el ayuntamiento. Algunos maestros los apoyan; otros dicen que "no es su papel meterse en eso".',
+      q:'¿Por qué los maestros que los apoyan tienen razón desde el punto de vista de la ciudadanía activa?',
+      opts:['Es peligroso meterse en temas políticos siendo tan jóvenes', 'Porque la ciudadanía activa se aprende haciendo: investigar, comunicar y dialogar con instituciones sobre un problema real es exactamente el ejercicio que forma jóvenes críticos y participativos — no solo estudiantes que memorizan contenidos', 'Los jóvenes deberían enfocarse en sus calificaciones', 'Porque la escuela debe apoyar todo lo que hagan los estudiantes'], correct:1, explain:'La ciudadanía no se aprende de memoria — se practica. Un plantel que permite y apoya que sus estudiantes investiguen, opinen y dialoguen con instituciones está formando exactamente el tipo de ciudadanía crítica y activa que la NEM y los ámbitos socioemocionales proponen.',
+      selLink:'Esta situación conecta todos los ámbitos: salud (agua), ciudadanía (organización), género (quién participa) y poder (quién decide). Eso es Ciencias Sociales II integrada.' },
+    { tipo:'situacion',
+      escenario:'Al terminar el semestre, tu maestra te pregunta: "¿Para qué te sirvió aprender esto?" Tú piensas en Karla que llega sin desayunar, en el tequio de San Pedro, en los jornaleros del aguacate y en la minera del río.',
+      q:'¿Qué conecta todos esos casos que viste durante el semestre?',
+      opts:['El gobierno debería resolver todos esos problemas', 'Todos muestran cómo las relaciones de poder, la organización social y la distribución desigual de recursos condicionan la vida cotidiana de personas reales — y cómo entenderlos es el primer paso para actuar con más consciencia y ciudadanía', 'Son problemas distintos sin relación entre sí', 'Son ejemplos tristes que solo sirven para el examen'], correct:1, explain:'¡Exactamente! CS2 no es una colección de temas aislados: es un marco para entender cómo el poder, la economía y la organización social se conectan con la vida de personas reales. Esa conexión — entre lo estructural y lo cotidiano — es la habilidad más importante que te llevas.',
+      selLink:'Este es el cierre del semestre: conectar todos los ámbitos, todos los temas y todas las situaciones en una visión integrada de la realidad social.' },
+    { tipo:'concepto',
+      q:'¿Qué significa "pensamiento crítico" aplicado a las Ciencias Sociales?',
+      opts:['Memorizar los autores y teorías más importantes del campo', 'La capacidad de analizar situaciones sociales identificando quién tiene poder, quién lo ejerce y sobre quién, qué intereses están en juego y qué estructuras reproducen la desigualdad — para poder actuar con más información y ciudadanía', 'Saber detectar noticias falsas en internet', 'Criticar todo lo que dice el gobierno o los medios'], correct:1, explain:'El pensamiento crítico en CS2 no es desconfianza de todo ni memorización de teorías. Es la capacidad de ver detrás de lo que parece natural, identificar relaciones de poder y estructuras, y actuar con esa información. Esa es la herramienta más duradera de este semestre.',
+      selLink:'Este es el propósito final de combinar Ciencias Sociales II con los ámbitos socioemocionales: formarte como bachiller que piensa, dialoga y actúa críticamente en el mundo.' },
+  ]
+},
+
+]; // fin BLOQUES
+
+
+/* ══ SISTEMA DE RANGOS ══ */
+const RANGOS = [
+  { min:0,    max:59,   nombre:'Observador/a',    ico:'👀', color:'#9966cc' },
+  { min:60,   max:179,  nombre:'Estudiante',       ico:'📖', color:'#00cfff' },
+  { min:180,  max:359,  nombre:'Analista',         ico:'🔍', color:'#00f5ff' },
+  { min:360,  max:539,  nombre:'Pensador/a Crítico/a', ico:'💡', color:'#ffe600' },
+  { min:540,  max:719,  nombre:'Sociólogo/a',      ico:'🌐', color:'#ff8c00' },
+  { min:720,  max:899,  nombre:'Crítico/a Social', ico:'⚡', color:'#ff00cc' },
+  { min:900,  max:9999, nombre:'Orgullo DGETI',    ico:'🎓', color:'#00ffcc' },
+];
+
+function getRango(xp){
+  return RANGOS.find(r => xp >= r.min && xp <= r.max) || RANGOS[0];
+}
+
+function getRangoProgress(xp){
+  const r = getRango(xp);
+  const next = RANGOS[RANGOS.indexOf(r)+1];
+  if(!next) return 100;
+  const range = next.min - r.min;
+  const progress = xp - r.min;
+  return Math.min(100, Math.round(progress/range*100));
+}
+
+/* ══ RENDER HOME ══ */
+function renderHome(){
+  const themes=TEMAS.map((t,ti)=>{
+    const blocks=BLOQUES.filter(b=>b.temaIdx===ti);
+    const done=blocks.filter(b=>STATE.blocksCompleted.includes(b.semana));
+    return `
+      <div class="tema-section">
+        <div class="tema-header">
+          <div class="tema-dot" style="background:${t.dot};box-shadow:0 0 8px ${t.dot}"></div>
+          <div class="tema-name" style="color:${t.dot}">${t.nombre}</div>
+          <div class="tema-weeks">${done.length}/4</div>
+        </div>
+        <div class="blocks-list">
+          ${blocks.map(b=>{
+            const isDone=STATE.blocksCompleted.includes(b.semana);
+            const dateUnlocked=isUnlocked(b.semana);
+            const isLocked=!isDone && !dateUnlocked;
+            const days=isLocked?daysUntilUnlock(b.semana):0;
+            const unlockLabel=isLocked
+              ? (days<=0?'Pronto...':days===1?'Mañana 🔓':`${days} días · ${formatUnlockDate(b.semana)}`)
+              : '';
+            return `
+              <div class="block-card ${isDone?'done':''} ${isLocked?'locked':''}"
+                   onclick="${isLocked?'':'startLesson('+b.semana+')'}">
+                <div class="block-num" style="background:${TEMAS[b.temaIdx].color}22;color:${TEMAS[b.temaIdx].dot}">S${b.semana}</div>
+                <div class="block-info">
+                  <div class="block-title">${b.titulo}</div>
+                  <div class="block-sub">${TEMAS[b.temaIdx].nombre}</div>
+                </div>
+                <div class="block-right">
+                  <div class="block-status">${isDone?'✅':isLocked?'🔒':'▶️'}</div>
+                  <div class="block-xp" style="${isLocked?'color:var(--muted)':''}">${isDone?'+60 XP':isLocked?unlockLabel:'6 preguntas'}</div>
+                </div>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }).join('');
+  document.getElementById('homeContent').innerHTML=themes;
+  document.getElementById('hXP').textContent=STATE.xp;
+  document.getElementById('hStr').textContent=STATE.xp;
+  // Rango
+  const rango = getRango(STATE.xp);
+  const pct = getRangoProgress(STATE.xp);
+  const next = RANGOS[RANGOS.indexOf(rango)+1];
+  document.getElementById('rangoIco').textContent=rango.ico;
+  document.getElementById('rangoNombre').textContent=rango.nombre;
+  document.getElementById('rangoNombre').style.color=rango.color;
+  document.getElementById('rangoNombre').style.textShadow='0 0 10px '+rango.color;
+  document.getElementById('rangoBar').style.width=pct+'%';
+  document.getElementById('rangoBar').style.background='linear-gradient(90deg,'+rango.color+',var(--magenta))';
+  document.getElementById('rangoBar').style.boxShadow='0 0 8px '+rango.color;
+  document.getElementById('rangoXPLabel').textContent=STATE.xp+' XP';
+  document.getElementById('rangoNext').textContent=next?'→ '+next.nombre+' ('+next.min+' XP)':'¡Máximo rango!';
+  renderBadges();
+  document.getElementById('hStrIco').textContent=rango.ico;
+  document.getElementById('hStr').textContent=rango.nombre;
+  document.getElementById('hStr').style.color=rango.color;
+}
+
+/* ══ FECHAS DE DESBLOQUEO POR BLOQUE ══
+   Calendario CBTis 179 — 2do semestre 2025-2026
+   Inicio: 2 feb 2026 | 1 bloque por lunes
+   Semana Santa: 30 mar – 10 abr (saltada)
+══════════════════════════════════════════ */
+const UNLOCK_DATES = {
+  1:  new Date(2026,1,2),   // 2 feb
+  2:  new Date(2026,1,9),   // 9 feb
+  3:  new Date(2026,1,16),  // 16 feb
+  4:  new Date(2026,1,23),  // 23 feb
+  5:  new Date(2026,2,2),   // 2 mar
+  6:  new Date(2026,2,9),   // 9 mar
+  7:  new Date(2026,2,16),  // 16 mar
+  8:  new Date(2026,2,23),  // 23 mar
+  9:  new Date(2026,3,13),  // 13 abr (post Semana Santa)
+  10: new Date(2026,3,20),  // 20 abr
+  11: new Date(2026,3,27),  // 27 abr
+  12: new Date(2026,4,4),   // 4 may
+  13: new Date(2026,4,11),  // 11 may
+  14: new Date(2026,4,18),  // 18 may
+  15: new Date(2026,4,25),  // 25 may
+};
+
+function isUnlocked(semana){
+  const unlock = UNLOCK_DATES[semana];
+  if(!unlock) return false;
+  const now = new Date();
+  // Compare only dates, not time
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return today >= unlock;
+}
+
+function daysUntilUnlock(semana){
+  const unlock = UNLOCK_DATES[semana];
+  if(!unlock) return 999;
+  const today = new Date();
+  const todayClean = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const diff = Math.ceil((unlock - todayClean) / (1000*60*60*24));
+  return Math.max(0, diff);
+}
+
+function formatUnlockDate(semana){
+  const d = UNLOCK_DATES[semana];
+  if(!d) return '';
+  const months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return d.getDate()+' '+months[d.getMonth()];
+}
+
+function nextBlock(){
+  if(STATE.blocksCompleted.length===0)return 1;
+  return Math.min(15,Math.max(...STATE.blocksCompleted)+1);
+}
+
+function renderBadges(){
+  document.getElementById('badgesRow').innerHTML=BADGES.map(b=>{
+    const earned=STATE.badges[b.id];
+    return `
+      <div class="badge-big ${earned?'earned':''}" onclick="sndClick();showBD('${b.id}')">
+        <span class="badge-big-ico">${earned?b.ico:'🔒'}</span>
+        <div class="badge-big-name">${b.name}</div>
+        <div class="badge-big-lock">${earned?'✅':'Sem.'+b.unlocksAfterBlock}</div>
+      </div>`;
+  }).join('');
+}
+
+function showBD(id){
+  const b=BADGES.find(x=>x.id===id);if(!b)return;
+  const earned=STATE.badges[b.id];
+  document.getElementById('bIco').textContent=earned?b.ico:'🔒';
+  document.getElementById('bName').textContent=b.name;
+  document.getElementById('bDesc').textContent=earned?b.desc:'Completa los bloques para desbloquear esta insignia.';
+  document.getElementById('badgeOverlay').classList.add('show');
+}
+function closeBadge(){
+  sndClick();
+  document.getElementById('badgeOverlay').classList.remove('show');
+  if(bQ.length>0){ bQ.shift(); if(bQ.length>0)setTimeout(showNB,400); }
+}
+
+let bQ=[];
+function unlockBadge(id){
+  const b=BADGES.find(x=>x.id===id);
+  if(!b||STATE.badges[b.id])return;
+  STATE.badges[b.id]=true;
+  bQ.push(b);
+  renderBadges();
+  if(bQ.length===1)showNB();
+}
+function showNB(){
+  if(!bQ.length)return;
+  const b=bQ[0];sndBadge();
+  document.getElementById('bIco').textContent=b.ico;
+  document.getElementById('bName').textContent=b.name;
+  document.getElementById('bDesc').textContent=b.desc;
+  document.getElementById('badgeOverlay').classList.add('show');
+  launchConfetti();
+}
+
+/* ══ TABS ══ */
+function showHomeTab(){
+  document.getElementById('homeContent').style.display='';
+  document.getElementById('avancePanel').classList.remove('show');
+  document.getElementById('navBtnHome').classList.add('active');
+  document.getElementById('navBtnAvance').classList.remove('active');
+}
+function showAvanceTab(){
+  sndClick();
+  document.getElementById('homeContent').style.display='none';
+  document.getElementById('avancePanel').classList.add('show');
+  document.getElementById('navBtnAvance').classList.add('active');
+  document.getElementById('navBtnHome').classList.remove('active');
+  renderAvance();
+}
+
+/* ══ RENDER AVANCE ══ */
+function renderAvance(){
+  const totalBloques=15;
+  const done=STATE.blocksCompleted.length;
+  const pct=Math.round(done/totalBloques*100);
+  const totalCorr=STATE.totalCorrect||0;
+  const totalWrong=STATE.totalWrong||0;
+  const totalQ=totalCorr+totalWrong;
+  const pctCorr=totalQ>0?Math.round(totalCorr/totalQ*100):0;
+  const temaStats=TEMAS.map((t,ti)=>{
+    const blocks=BLOQUES.filter(b=>b.temaIdx===ti);
+    const doneT=blocks.filter(b=>STATE.blocksCompleted.includes(b.semana)).length;
+    const shortName=t.nombre.replace(/Tema \d+ — /,'');
+    return {t,doneT,total:blocks.length,xpT:doneT*60,shortName};
+  });
+  const earnedBadges=BADGES.filter(b=>STATE.badges[b.id]);
+
+  const badgesCard = earnedBadges.length>0
+    ? `<div class="av-card">
+        <div class="av-card-title">✦ Insignias obtenidas</div>
+        <div class="av-badges-grid">
+          ${earnedBadges.map(b=>`
+            <div class="av-badge-item" onclick="showBD('${b.id}')">
+              <span class="abi">${b.ico}</span>
+              <div class="abn">${b.name}</div>
+            </div>`).join('')}
+        </div>
+      </div>`
+    : `<div class="av-card" style="text-align:center">
+        <div class="av-card-title">✦ Insignias obtenidas</div>
+        <div style="font-size:36px;margin:8px 0 6px;opacity:.4">🔒 🔒 🔒 🔒</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px">Completa bloques para desbloquear</div>
+      </div>`;
+
+  document.getElementById('avancePanel').innerHTML=`
+    ${badgesCard}
+
+    <div class="av-card">
+      <div class="av-card-title">📅 Avance del semestre</div>
+      <div class="av-big">
+        <div class="av-big-num" style="color:var(--cyan)">${done}<span style="font-size:22px;color:var(--muted)">/${totalBloques}</span></div>
+        <div class="av-big-label">bloques completados</div>
+      </div>
+      <div class="av-semestre-bar"><div class="av-semestre-fill" style="width:${pct}%"></div></div>
+      <div class="av-pct">${pct}% del semestre</div>
+    </div>
+
+    <div class="av-card">
+      <div class="av-card-title">⚡ XP por tema</div>
+      ${temaStats.map(({t,doneT,total,xpT,shortName})=>`
+        <div class="av-tema-row">
+          <div class="av-tema-top">
+            <div class="av-tema-name" style="color:${t.dot}">● ${shortName}</div>
+            <div class="av-tema-count">${xpT} XP · ${doneT}/${total}</div>
+          </div>
+          <div class="av-tema-bar">
+            <div class="av-tema-fill" style="width:${Math.round(doneT/total*100)}%;background:${t.dot};box-shadow:0 0 6px ${t.dot}"></div>
+          </div>
+        </div>`).join('')}
+      <div style="text-align:right;font-family:'Share Tech Mono',monospace;font-size:16px;color:var(--yellow);margin-top:8px;border-top:1px solid var(--border);padding-top:10px;text-shadow:0 0 8px var(--yellow)">
+        TOTAL: ${STATE.xp} XP ⚡
+      </div>
+    </div>
+
+    <div class="av-card">
+      <div class="av-card-title">🎯 Preguntas respondidas</div>
+      <div class="av-stats-grid">
+        <div class="av-stat">
+          <div class="av-stat-ico">✅</div>
+          <div class="av-stat-val" style="color:var(--cyan)">${totalCorr}</div>
+          <div class="av-stat-lbl">Correctas</div>
+        </div>
+        <div class="av-stat">
+          <div class="av-stat-ico">❌</div>
+          <div class="av-stat-val" style="color:var(--red)">${totalWrong}</div>
+          <div class="av-stat-lbl">Incorrectas</div>
+        </div>
+        <div class="av-stat av-full">
+          <div class="av-stat-ico">🎯</div>
+          <div class="av-stat-val" style="color:var(--yellow)">${pctCorr}%</div>
+          <div class="av-stat-lbl">Precisión · ${totalQ} preguntas</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ══ GAME ══ */
+let cB=null,cQ=0,correct=0,xpE=0,answered=false;
+
+function startLesson(semana){
+  sndClick();
+  cB=BLOQUES.find(b=>b.semana===semana);
+  if(!cB)return;
+  cQ=0;correct=0;xpE=0;answered=false;
+  const t=TEMAS[cB.temaIdx];
+  document.getElementById('lhTitle').textContent='Sem. '+cB.semana+' — '+cB.titulo;
+  document.getElementById('lhSub').textContent=t.sel.ambito;
+  showScreen('lesson');renderQ();
+}
+
+function renderQ(){
+  const q=cB.preguntas[cQ];
+  const t=TEMAS[cB.temaIdx];
+  document.getElementById('lessonBar').style.width=(cQ/cB.preguntas.length*100)+'%';
+  answered=false;
+  document.getElementById('fbSheet').className='fbsheet';
+
+  const qBox = q.tipo==='situacion'
+    ? `<div class="scenario-box" style="border-color:${t.color}">
+        <div class="scenario-label" style="color:${t.dot}">📍 Situación</div>
+        <div class="scenario-text">${q.escenario}</div>
+        <div class="scenario-q">❓ ${q.q}</div>
+       </div>`
+    : `<div class="concept-box" style="border-color:${t.color}">
+        <div class="concept-label" style="color:${t.dot}">💡 Concepto en contexto</div>
+        <div class="concept-q">${q.q}</div>
+       </div>`;
+
+  document.getElementById('qWrap').innerHTML=`
+    <div class="sel-strip" style="background:${t.sel.border}15;border-color:${t.sel.border}">
+      <div class="sel-strip-ico">${t.sel.ico}</div>
+      <div>
+        <div class="sel-strip-tag" style="color:${t.sel.tc}">${t.sel.ambito}</div>
+        <div class="sel-strip-prop" style="color:${t.sel.tc}">${t.sel.prop}</div>
+      </div>
+    </div>
+    ${qBox}
+    <div class="opts">
+      ${q.opts.map((o,i)=>`
+        <button class="opt" id="o${i}" onclick="pick(${i})">
+          <span class="ol">${['A','B','C','D'][i]}</span>
+          <span>${o}</span>
+        </button>`).join('')}
+    </div>`;
+}
+
+function pick(idx){
+  if(answered)return;sndClick();answered=true;
+  const q=cB.preguntas[cQ];const ok=idx===q.correct;
+  const t=TEMAS[cB.temaIdx];
+  q.opts.forEach((_,i)=>document.getElementById('o'+i).disabled=true);
+  const sheet=document.getElementById('fbSheet');
+
+  if(ok){
+    document.getElementById('o'+idx).classList.add('correct');
+    correct++;xpE+=10;STATE.totalCorrect++;sndOk();
+    spawnStars(document.getElementById('o'+idx));showXP();
+    document.getElementById('fbMascot').textContent='🦉';
+    document.getElementById('fbTitle').textContent=['¡Excelente! 🎉','¡Correcto! ⭐','¡Así se hace! 🔥','¡Muy bien! 💪'][Math.floor(Math.random()*4)];
+    document.getElementById('fbExpl').textContent=q.explain;
+    if(q.selLink){
+      const fs=document.getElementById('fbSel');
+      fs.style.display='block';
+      fs.style.background=t.sel.border+'18';
+      fs.style.borderLeftColor=t.sel.border;
+      fs.style.color=t.sel.tc;
+      document.getElementById('fbSelTag').textContent=t.sel.ico+' '+t.sel.ambito;
+      document.getElementById('fbSelProp').textContent=q.selLink;
+    }
+    sheet.className='fbsheet cs up';
+  }else{
+    document.getElementById('o'+idx).classList.add('wrong');
+    document.getElementById('o'+q.correct).classList.add('correct');
+    STATE.totalWrong++;sndWrong();
+    document.getElementById('fbMascot').textContent='😔';
+    document.getElementById('fbTitle').textContent='Casi... 💡';
+    document.getElementById('fbExpl').textContent=q.explain;
+    document.getElementById('fbSel').style.display='none';
+    sheet.className='fbsheet ws up';
+  }
+}
+
+function nextQ(){
+  sndClick();document.getElementById('fbSheet').className='fbsheet';
+  cQ++;
+  if(cQ>=cB.preguntas.length)setTimeout(showComplete,350);
+  else setTimeout(renderQ,350);
+}
+
+function showXP(){
+  const t=document.getElementById('xpToast');t.classList.remove('pop');void t.offsetWidth;t.classList.add('pop');
+}
+
+function spawnStars(el){
+  const r=el.getBoundingClientRect();
+  ['⭐','✨','💫','🌟'].forEach((s,i)=>{
+    const d=document.createElement('div');d.className='star-burst';d.textContent=s;
+    d.style.left=(r.left+Math.random()*r.width)+'px';d.style.top=(r.top+10)+'px';
+    document.body.appendChild(d);
+    setTimeout(()=>{d.classList.add('fly');setTimeout(()=>d.remove(),950);},i*80);
+  });
+}
+
+function showComplete(){
+  sndDone();
+  if(!STATE.blocksCompleted.includes(cB.semana)){
+    STATE.blocksCompleted.push(cB.semana);
+    STATE.xp+=xpE;
+
+  }
+  document.getElementById('hXP').textContent=STATE.xp;
+  document.getElementById('hStr').textContent=STATE.streak;
+  document.getElementById('rXP').textContent='+'+xpE;
+  document.getElementById('rCorr').textContent=correct+'/'+cB.preguntas.length;
+  const _r=getRango(STATE.xp);
+  document.getElementById('rStr').textContent=_r.nombre;
+  document.getElementById('rStr').style.color=_r.color;
+  document.getElementById('rRangoIco').textContent=_r.ico;
+
+  const t=TEMAS[cB.temaIdx];
+  const cb=document.getElementById('compBlock');
+  cb.textContent='Semana '+cB.semana+' — '+cB.titulo;
+  cb.style.background=t.color+'22';
+  cb.style.color=t.dot;
+  cb.style.border='1px solid '+t.color;
+
+  // Badge unlocks — only on exact block
+  const js=cB.semana;
+  if(js===4) setTimeout(()=>unlockBadge('necesidades'),800);
+  if(js===8) setTimeout(()=>unlockBadge('organizacion'),800);
+  if(js===12)setTimeout(()=>unlockBadge('produccion'),800);
+  if(js===15)setTimeout(()=>unlockBadge('dgeti'),800);
+
+  showScreen('complete');
+  setTimeout(launchConfetti,300);
+}
+
+function goHome(){
+  sndClick();
+  document.getElementById('fbSheet').className='fbsheet';
+  showScreen('home');
+  showHomeTab();
+  renderHome();
+}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function launchConfetti(){
+  const canvas=document.getElementById('conf'),ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const cols=['#00f5ff','#ff00cc','#9b00ff','#ff3864','#ffe600','#ff8c00','#00ffcc','#ff2d78'];
+  const ps=Array.from({length:130},()=>({
+    x:Math.random()*canvas.width,y:-20,
+    r:Math.random()*7+3,
+    color:cols[Math.floor(Math.random()*cols.length)],
+    rot:Math.random()*360,
+    vx:(Math.random()-.5)*5,vy:Math.random()*5+3,
+    vr:(Math.random()-.5)*9,rect:Math.random()<.5
+  }));
+  let t=0;
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ps.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy+t*.015;p.rot+=p.vr;
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle=p.color;ctx.globalAlpha=.9;
+      if(p.rect)ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r);
+      else{ctx.beginPath();ctx.arc(0,0,p.r,0,Math.PI*2);ctx.fill();}
+      ctx.restore();
+    });
+    t++;
+    if(t<180)requestAnimationFrame(draw);
+    else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  draw();
+}
+
+
+/* ══ SUPABASE CONFIG ══ */
+const SB_URL = 'https://alajpjhhkehhrksawdqb.supabase.co';
+const SB_KEY = 'sb_publishable_ii1xtkAo_3ZqHDejHrq1mg_wjAO4eMj';
+
+async function sbFetch(path, opts={}){
+  try{
+    const headers = {
+      'Content-Type': 'application/json',
+      'Prefer': opts.prefer||'return=minimal'
+    };
+    // Support both old (eyJ) and new (sb_) key formats
+    if(SB_KEY.startsWith('sb_')){
+      headers['Authorization'] = 'Bearer '+SB_KEY;
+    } else {
+      headers['apikey'] = SB_KEY;
+      headers['Authorization'] = 'Bearer '+SB_KEY;
+    }
+    const res = await fetch(SB_URL+'/rest/v1/'+path, {
+      headers, ...opts
+    });
+    if(!res.ok){
+      const errText = await res.text();
+      console.error('Supabase error:', res.status, errText);
+      return null;
+    }
+    const ct = res.headers.get('content-type')||'';
+    return ct.includes('json') ? await res.json() : true;
+  }catch(e){ 
+    console.error('sbFetch exception:', e);
+    return null; 
+  }
+}
+
+async function buscarAlumno(matricula){
+  // Try lowercase first, then capitalized
+  let data = await sbFetch(`alumnos?matricula=eq.${matricula}&select=matricula,nombre,grupo`);
+  if(!data || !data.length){
+    data = await sbFetch(`Alumnos?matricula=eq.${matricula}&select=matricula,nombre,grupo`);
+  }
+  console.log('buscarAlumno result:', data);
+  return (data && data.length) ? data[0] : null;
+}
+
+
+
+async function guardarProgreso(){
+  if(!STATE.matricula) return;
+  const rango = getRango(STATE.xp);
+  const payload = {
+    matricula: STATE.matricula,
+    xp: STATE.xp,
+    bloques_completados: STATE.blocksCompleted,
+    total_correctas: STATE.totalCorrect,
+    total_incorrectas: STATE.totalWrong,
+    rango: rango.nombre,
+    ultima_sesion: new Date().toISOString()
+  };
+  // Upsert — insert o update
+  await sbFetch('progreso', {
+    method:'POST',
+    prefer:'resolution=merge-duplicates,return=minimal',
+    body: JSON.stringify(payload)
+  });
+  saveState(); // también local
+}
+
+async function cargarProgreso(matricula){
+  const data = await sbFetch(`progreso?matricula=eq.${matricula}&select=*`);
+  if(data && data.length){
+    const p = data[0];
+    STATE.xp = p.xp||0;
+    STATE.blocksCompleted = p.bloques_completados||[];
+    STATE.totalCorrect = p.total_correctas||0;
+    STATE.totalWrong = p.total_incorrectas||0;
+    return true;
+  }
+  return false;
+}
+
+/* ══ MATRÍCULA & STORAGE ══ */
+const STORAGE_KEY = 'sociom_v8_';
+
+function saveState(){
+  try{
+    const mat = STATE.matricula;
+    if(!mat) return;
+    localStorage.setItem(STORAGE_KEY+mat, JSON.stringify({
+      xp: STATE.xp,
+
+      blocksCompleted: STATE.blocksCompleted,
+      totalCorrect: STATE.totalCorrect,
+      totalWrong: STATE.totalWrong,
+      badges: STATE.badges,
+      lastSeen: new Date().toISOString()
+    }));
+  }catch(e){}
+}
+
+function loadState(mat){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY+mat);
+    if(!raw) return false;
+    const saved = JSON.parse(raw);
+    STATE.xp = saved.xp||0;
+
+    STATE.blocksCompleted = saved.blocksCompleted||[];
+    STATE.totalCorrect = saved.totalCorrect||0;
+    STATE.totalWrong = saved.totalWrong||0;
+    STATE.badges = saved.badges||{necesidades:false,organizacion:false,produccion:false,dgeti:false};
+    return true;
+  }catch(e){return false;}
+}
+
+function validateMatricula(){
+  const pin = document.getElementById('pinInput').value.trim();
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginError');
+  err.textContent='';
+  // Solo números
+  document.getElementById('pinInput').value = pin.replace(/\D/g,'');
+  btn.disabled = pin.replace(/\D/g,'').length < 4;
+}
+
+function doLogin(){
+  sndClick();
+  const pin = document.getElementById('pinInput').value.trim();
+  const err = document.getElementById('loginError');
+  
+  if(pin.length < 4){
+    err.textContent='⚠ Ingresa tus 4 dígitos';
+    return;
+  }
+  // Reconstruir matrícula completa: prefijo fijo + pin
+  const PREFIJO = '2531305179';
+  const mat = PREFIJO + pin;
+  STATE.matricula = mat;
+  // Buscar alumno en Supabase
+  const btn2 = document.getElementById('loginBtn');
+  btn2.disabled=true; btn2.textContent='Verificando...';
+  const err2 = document.getElementById('loginError');
+  
+  buscarAlumno(mat).then(alumno => {
+    if(!alumno){
+      err2.textContent='⚠ Número de control no encontrado';
+      btn2.disabled=false; btn2.textContent='INGRESAR →';
+      STATE.matricula='';
+      return;
+    }
+    // Alumno encontrado
+    STATE.nombre = alumno.nombre;
+    STATE.grupo = alumno.grupo;
+    document.getElementById('userChip').textContent='👤 '+alumno.nombre.split(' ')[0];
+    
+    // Cargar progreso de Supabase
+    cargarProgreso(mat).then(returning => {
+      // También intentar local como respaldo
+      if(!returning) loadState(mat);
+      
+      showScreen('home');
+      document.getElementById('login').classList.remove('active');
+      renderHome();
+      
+      const t = document.getElementById('xpToast');
+      if(returning){
+        t.textContent = '¡Bienvenido/a, '+alumno.nombre.split(' ')[0]+'! 🦉';
+      } else {
+        t.textContent = '¡Hola, '+alumno.nombre.split(' ')[0]+'! Bienvenido/a 🎉';
+      }
+      t.classList.remove('pop');void t.offsetWidth;t.classList.add('pop');
+      setTimeout(()=>{ t.textContent='+10 XP ⚡'; },3000);
+      
+      guardarProgreso();
+      btn2.disabled=false; btn2.textContent='INGRESAR →';
+    });
+  });
+}
+
+function showLogout(){
+  if(!STATE.matricula) return;
+  if(confirm('¿Cerrar sesión? Tu progreso está guardado.')){
+    STATE.matricula='';
+    showScreen('login');
+    document.getElementById('login').classList.add('active');
+    document.getElementById('matriculaInput').value='';
+    document.getElementById('loginBtn').disabled=true;
+  }
+}
+
+/* Patch saveState into game flow */
+const _origShowComplete = showComplete;
+showComplete = function(){
+  _origShowComplete();
+  setTimeout(guardarProgreso, 500);
+};
+
+/* ══ INIT ══ */
+// Check if returning user
+const _lastMat = (()=>{
+  try{
+    // Find most recent session
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(k&&k.startsWith(STORAGE_KEY)){
+        return k.replace(STORAGE_KEY,'');
+      }
+    }
+  }catch(e){}
+  return null;
+})();
+
+// Show splash then route to login or home
+setTimeout(()=>{
+  const splash = document.getElementById('splash');
+  splash.classList.add('fade');
+  setTimeout(()=>{
+    splash.style.display='none';
+    if(_lastMat){
+      // Auto-login returning user — solo necesitamos el PIN
+      document.getElementById('pinInput').value=_lastMat.slice(-4);
+      validateMatricula();
+      doLogin();
+    } else {
+      showScreen('login');
+      document.getElementById('login').classList.add('active');
+    }
+  }, 600);
+}, 2800);
+</script>
+</body>
+</html>
 
