@@ -778,7 +778,12 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
     <div class="res-card"><div class="res-ico">✅</div><div class="res-val" id="rCorr" style="color:var(--cyan)">0/6</div><div class="res-name">Correctas</div></div>
     <div class="res-card"><div class="res-ico" id="rRangoIco">👀</div><div class="res-val" id="rStr" style="color:var(--purple);font-size:13px">Observador/a</div><div class="res-name">Rango</div></div>
   </div>
-  <button class="home-btn" onclick="goHome()">SEGUIR APRENDIENDO</button>
+  <div id="nextLessonSug" style="margin:12px 0;padding:12px 16px;background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.2);border-radius:12px;text-align:center;display:none;">
+    <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--cyan);letter-spacing:1px;margin-bottom:8px;">¿QUIERES SEGUIR APRENDIENDO?</div>
+    <div id="nextLessonName" style="font-size:13px;color:var(--text);margin-bottom:10px;"></div>
+    <button class="home-btn" id="nextLessonBtn" style="margin:0;padding:10px 20px;font-size:12px;" onclick="goNextLesson()">IR AL SIGUIENTE →</button>
+  </div>
+  <button class="home-btn" onclick="goHome()" style="background:rgba(61,0,128,.4);margin-top:8px;">VOLVER AL INICIO</button>
 </div>
 
 <script>
@@ -1356,6 +1361,16 @@ const BLOQUES = [
 
 ];
 
+const RANGOS = [
+  { nombre:'Observador/a',  ico:'👀', min:0,   max:59,   color:'#ff8c00' },
+  { nombre:'Estudiante',    ico:'📚', min:60,  max:149,  color:'#00f5ff' },
+  { nombre:'Analista',      ico:'🔍', min:150, max:299,  color:'#bf00ff' },
+  { nombre:'Pensador/a',    ico:'🧠', min:300, max:499,  color:'#ff00cc' },
+  { nombre:'Crítico/a',     ico:'⚡', min:500, max:749,  color:'#ffe600' },
+  { nombre:'Experto/a',     ico:'🎯', min:750, max:999,  color:'#00ffcc' },
+  { nombre:'Orgullo DGETI', ico:'🏆', min:1000,max:99999,color:'#ff2d55' },
+];
+
 function getRango(xp){
   return RANGOS.find(r => xp >= r.min && xp <= r.max) || RANGOS[0];
 }
@@ -1749,7 +1764,8 @@ function showComplete(){
   if(!STATE.blocksCompleted.includes(cB.semana)){
     STATE.blocksCompleted.push(cB.semana);
     STATE.xp+=xpE;
-
+    saveState(); // guardar local inmediatamente
+    setTimeout(guardarProgreso, 300); // guardar en nube
   }
   document.getElementById('hXP').textContent=STATE.xp;
   document.getElementById('hStr').textContent=STATE.streak;
@@ -1774,8 +1790,29 @@ function showComplete(){
   if(js===12)setTimeout(()=>unlockBadge('produccion'),800);
   if(js===15)setTimeout(()=>unlockBadge('dgeti'),800);
 
+  // Mostrar sugerencia de siguiente bloque
+  const _nextSem = cB.semana + 1;
+  const _nextB = BLOQUES.find(b=>b.semana===_nextSem);
+  const _sugEl = document.getElementById('nextLessonSug');
+  if(_nextB && isUnlocked(_nextSem) && !STATE.blocksCompleted.includes(_nextSem)){
+    document.getElementById('nextLessonName').textContent='S'+_nextSem+' — '+_nextB.titulo;
+    _sugEl.style.display='block';
+  } else {
+    _sugEl.style.display='none';
+  }
+
   showScreen('complete');
   setTimeout(launchConfetti,300);
+}
+
+function goNextLesson(){
+  const nextSem = cB.semana + 1;
+  const nextB = BLOQUES.find(b=>b.semana===nextSem);
+  if(nextB && isUnlocked(nextSem)){
+    startLesson(nextSem);
+  } else {
+    goHome();
+  }
 }
 
 function goHome(){
@@ -1840,7 +1877,7 @@ async function sbFetch(path, opts={}){
     const url = SB_URL+'/rest/v1/'+base+'?apikey='+SB_KEY+rest;
     const headers = {
       'Content-Type': 'application/json',
-      'Prefer': opts.prefer||'return=minimal',
+      'Prefer': opts.method==='PATCH'||opts.method==='POST' ? 'return=representation' : (opts.prefer||'return=minimal'),
       'apikey': SB_KEY,
       'Authorization': 'Bearer '+SB_KEY
     };
@@ -1881,23 +1918,26 @@ async function guardarProgreso(){
     rango: rango.nombre,
     ultima_sesion: new Date().toISOString()
   };
-  // Upsert — insert o update
-  // Check if record exists first
-  const exists = await sbFetch(`progreso?matricula=eq.${STATE.matricula}&select=matricula`);
-  if(exists && exists.length){
-    // UPDATE
-    await sbFetch(`progreso?matricula=eq.${STATE.matricula}`, {
+  try {
+    // Intentar UPDATE primero
+    const upd = await sbFetch(`progreso?matricula=eq.${STATE.matricula}`, {
       method:'PATCH',
       body: JSON.stringify(payload)
     });
-  } else {
-    // INSERT
-    await sbFetch('progreso', {
-      method:'POST',
-      body: JSON.stringify(payload)
-    });
+    console.log('PATCH result:', JSON.stringify(upd));
+    // Si no actualizó nada (array vacío o null), hacer INSERT
+    if(!upd || (Array.isArray(upd) && upd.length===0)){
+      const ins = await sbFetch('progreso', {
+        method:'POST',
+        body: JSON.stringify(payload)
+      });
+      console.log('POST result:', JSON.stringify(ins));
+    }
+    console.log('✅ Progreso guardado: XP='+STATE.xp+' Bloques='+JSON.stringify(STATE.blocksCompleted));
+  } catch(e){
+    console.warn('⚠️ Error guardando progreso:', e);
   }
-  saveState(); // también local
+  saveState();
 }
 
 async function cargarProgreso(matricula){
@@ -2049,12 +2089,7 @@ function showLogout(){
   }
 }
 
-/* Patch saveState into game flow */
-const _origShowComplete = showComplete;
-showComplete = function(){
-  _origShowComplete();
-  setTimeout(guardarProgreso, 500);
-};
+
 
 /* ══ INIT ══ */
 // Check if returning user
