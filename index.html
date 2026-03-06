@@ -590,20 +590,27 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
 }
 .login-label{
   font-family:'Share Tech Mono',monospace;font-size:10px;
-  color:var(--purple);letter-spacing:2px;text-transform:uppercase;
-  margin-bottom:8px;display:block;text-shadow:0 0 6px var(--purple);
+  color:var(--cyan);letter-spacing:2px;text-transform:uppercase;
+  margin-bottom:8px;display:block;
+  text-shadow:0 0 8px var(--cyan),0 0 16px rgba(0,245,255,.5);
 }
 .login-input{
   width:100%;padding:14px 16px;
-  background:rgba(10,0,21,.7);
-  border:1px solid var(--border);border-radius:12px;
+  background:rgba(0,20,40,.75);
+  border:1.5px solid var(--cyan);border-radius:12px;
   font-family:'Share Tech Mono',monospace;font-size:18px;
   color:var(--cyan);letter-spacing:3px;text-align:center;
-  outline:none;transition:all .2s;margin-bottom:8px;
+  outline:none;transition:all .25s;margin-bottom:8px;
   text-transform:uppercase;
+  box-shadow:0 0 14px rgba(0,245,255,.35),inset 0 0 10px rgba(0,245,255,.07);
+  text-shadow:0 0 8px var(--cyan);
 }
-.login-input:focus{border-color:var(--cyan);box-shadow:0 0 16px rgba(0,245,255,.25);}
-.login-input::placeholder{color:var(--muted);letter-spacing:1px;font-size:13px;text-transform:none;}
+.login-input:focus{
+  border-color:var(--cyan);
+  box-shadow:0 0 28px rgba(0,245,255,.65),inset 0 0 16px rgba(0,245,255,.15);
+  text-shadow:0 0 12px var(--cyan),0 0 24px rgba(0,245,255,.5);
+}
+.login-input::placeholder{color:rgba(0,245,255,.35);letter-spacing:1px;font-size:13px;text-transform:none;text-shadow:none;}
 .login-hint{
   font-family:'Share Tech Mono',monospace;font-size:9px;
   color:var(--muted);letter-spacing:1px;text-align:center;margin-bottom:20px;
@@ -669,6 +676,7 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
     <span class="login-owl">🦉</span>
     <div class="login-title">¡Bienvenido/a!</div>
     <div class="login-sub">CBTis 179 · Ciencias Sociales II</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--magenta);text-shadow:0 0 8px var(--magenta);margin-top:8px;text-align:center;opacity:.85;">Porque en la DGETI se siente y se siente bien</div>
   </div>
   <div class="login-card">
     <label class="login-label" for="pinInput">▸ Ingresa tu clave de acceso</label>
