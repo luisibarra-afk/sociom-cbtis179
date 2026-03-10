@@ -643,6 +643,31 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
   padding:3px 8px;letter-spacing:1px;cursor:pointer;
 }
 
+/* ── LEADERBOARD ── */
+.lb-section{margin:0 16px 8px;display:none}
+.lb-row{display:flex;align-items:center;gap:10px;padding:10px 14px;margin-bottom:6px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;transition:all .2s}
+.lb-row.me{background:rgba(0,245,255,.08);border-color:rgba(0,245,255,.4)}
+.lb-medal{font-size:20px;min-width:26px;text-align:center}
+.lb-name{flex:1;font-size:13px;color:var(--text);font-family:'Share Tech Mono',monospace}
+.lb-row.me .lb-name{color:var(--cyan);font-weight:700}
+.lb-xp{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--yellow);white-space:nowrap}
+.lb-toggle-btn{width:100%;margin-top:4px;padding:8px;background:rgba(0,245,255,.05);border:1px solid rgba(0,245,255,.2);border-radius:10px;color:var(--cyan);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;transition:all .2s}
+.lb-toggle-btn:hover{background:rgba(0,245,255,.12);box-shadow:0 0 10px rgba(0,245,255,.2)}
+/* ── TEACHER PANEL ── */
+#teacherPanel{display:none;position:fixed;inset:0;background:var(--bg);z-index:300;overflow-y:auto}
+.tp-header{background:rgba(22,0,61,.95);padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:1;backdrop-filter:blur(8px)}
+.tp-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px}
+.tp-stat{background:rgba(22,0,61,.5);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.tp-stat-val{font-size:1.5rem;font-weight:800;color:var(--cyan)}
+.tp-stat-lbl{font-size:0.75rem;color:var(--muted);margin-top:2px;font-family:'Share Tech Mono',monospace}
+.tp-search{width:100%;margin-bottom:14px;padding:10px 14px;background:rgba(22,0,61,.5);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:0.9rem;outline:none;box-sizing:border-box}
+.tp-search:focus{border-color:var(--cyan)}
+.tp-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);margin-bottom:24px}
+.tp-table{width:100%;border-collapse:collapse;font-size:0.83rem}
+.tp-table thead tr{background:rgba(40,0,80,.6)}
+.tp-table th{padding:10px 14px;text-align:left;color:var(--muted);font-weight:600;white-space:nowrap;font-family:'Share Tech Mono',monospace;font-size:0.75rem;letter-spacing:.5px}
+.tp-table td{padding:10px 14px;border-top:1px solid rgba(61,0,128,.3)}
+.tp-table tbody tr:hover{background:rgba(0,245,255,.03)}
 </style>
 </head>
 <body>
@@ -736,6 +761,13 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
     </div>
   </div>
 
+  <!-- LEADERBOARD -->
+  <div class="lb-section" id="lbSection">
+    <div class="section-title">▸ Ranking del grupo 🏆</div>
+    <div id="lbList"></div>
+    <button class="lb-toggle-btn" id="lbToggle" style="display:none" onclick="toggleLb()">VER TOP 5 →</button>
+  </div>
+
   <div class="section-title">▸ Mis insignias</div>
   <div class="badges-row" id="badgesRow"></div>
 
@@ -746,6 +778,40 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
     <button class="nav-item active" id="navBtnHome" onclick="showHomeTab()"><span class="ni">🏠</span>Inicio</button>
     <button class="nav-item" id="navBtnAvance" onclick="showAvanceTab()"><span class="ni">📊</span>Mi avance</button>
   </nav>
+</div>
+
+<!-- ══ TEACHER PANEL ══ -->
+<div id="teacherPanel">
+  <div class="tp-header">
+    <span style="font-size:1.4rem">🎓</span>
+    <div>
+      <div style="font-weight:800;font-size:1rem;color:var(--cyan);text-shadow:0 0 8px var(--cyan)">Panel Maestro — SocioMente</div>
+      <div style="font-size:0.75rem;color:var(--muted);font-family:'Share Tech Mono',monospace">CBTis 179 · Ciencias Sociales II</div>
+    </div>
+    <button onclick="teacherLogout()" style="margin-left:auto;background:rgba(155,0,255,.2);border:1px solid rgba(155,0,255,.4);color:var(--text);padding:7px 14px;border-radius:8px;font-size:0.82rem;cursor:pointer">Salir</button>
+  </div>
+  <div style="padding:20px;max-width:1100px;margin:0 auto">
+    <div class="tp-stat-grid" id="tpStats"></div>
+    <input class="tp-search" id="tpSearch" type="text" placeholder="Buscar alumno por nombre..." oninput="filterTeacher()">
+    <div class="tp-table-wrap">
+      <table class="tp-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nombre</th>
+            <th>Grupo</th>
+            <th>XP ⚡</th>
+            <th>Rango</th>
+            <th>Semanas ✓</th>
+            <th>Correctas</th>
+            <th>% Aciertos</th>
+            <th>Última sesión</th>
+          </tr>
+        </thead>
+        <tbody id="tpTbody"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <!-- ══ LESSON ══ -->
@@ -2026,12 +2092,18 @@ function doLogin(){
     err.textContent='⚠ Ingresa tus 4 dígitos';
     return;
   }
+  // Acceso maestro
+  const btn2 = document.getElementById('loginBtn');
+  if(pin === '1179'){
+    btn2.disabled=false; btn2.textContent='INGRESAR →';
+    showTeacherPanel();
+    return;
+  }
   // Reconstruir matrícula completa: prefijo fijo + pin
   const PREFIJO = '2531305179';
   const mat = PREFIJO + pin;
   STATE.matricula = mat;
   // Buscar alumno en Supabase
-  const btn2 = document.getElementById('loginBtn');
   btn2.disabled=true; btn2.textContent='Verificando...';
   const err2 = document.getElementById('loginError');
   
@@ -2055,6 +2127,7 @@ function doLogin(){
       showScreen('home');
       document.getElementById('login').classList.remove('active');
       renderHome();
+      loadLeaderboard();
       
       const t = document.getElementById('xpToast');
       if(returning){
@@ -2134,6 +2207,141 @@ setTimeout(()=>{
     showScreen('login');
   }, 500);
 }, 2500);
+
+/* ══ UTILIDADES ══ */
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ══ LEADERBOARD ══ */
+let lbData = [];
+let lbCount = 3;
+
+async function loadLeaderboard(){
+  const prog = await sbFetch('progreso?select=matricula,xp,rango&order=xp.desc&limit=5');
+  if(!prog || !prog.length) return;
+
+  const mats = prog.map(p => p.matricula).join(',');
+  const als = await sbFetch(`"Alumnos"?matricula=in.(${mats})&select=matricula,nombre`);
+
+  lbData = prog.map(p => {
+    const a = (als||[]).find(al => String(al.matricula) === String(p.matricula)) || {};
+    return { matricula: p.matricula, nombre: a.nombre || '—', xp: p.xp||0, rango: p.rango||'' };
+  });
+
+  if(!lbData.length) return;
+  document.getElementById('lbSection').style.display = 'block';
+  renderLb(3);
+}
+
+function renderLb(n){
+  lbCount = n;
+  const medals = ['🥇','🥈','🥉'];
+  const list = document.getElementById('lbList');
+  if(!list) return;
+
+  list.innerHTML = lbData.slice(0, n).map((s, i) => {
+    const isMe = s.matricula === STATE.matricula;
+    const name = escHtml((s.nombre||'').split(' ').slice(0,2).join(' '));
+    return `<div class="lb-row${isMe?' me':''}">
+      <span class="lb-medal">${medals[i]||(i+1)}</span>
+      <span class="lb-name">${name}${isMe?' <span style="font-size:10px;opacity:.8">(tú)</span>':''}</span>
+      <span class="lb-xp">⚡ ${s.xp} XP</span>
+    </div>`;
+  }).join('');
+
+  const btn = document.getElementById('lbToggle');
+  if(lbData.length > 3){
+    btn.style.display = 'block';
+    const expanded = n > 3;
+    btn.textContent = expanded ? 'OCULTAR ↑' : 'VER TOP 5 →';
+    btn.onclick = () => renderLb(expanded ? 3 : 5);
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+function toggleLb(){ renderLb(lbCount > 3 ? 3 : 5); }
+
+/* ══ PANEL MAESTRO ══ */
+let tpData = [];
+
+async function showTeacherPanel(){
+  document.getElementById('login').style.cssText = 'display:none!important';
+  document.getElementById('teacherPanel').style.display = 'block';
+  document.getElementById('tpStats').innerHTML = '<div style="color:var(--muted);font-family:\'Share Tech Mono\',monospace;font-size:11px">Cargando datos...</div>';
+
+  const [prog, als] = await Promise.all([
+    sbFetch('progreso?select=*&order=xp.desc'),
+    sbFetch('"Alumnos"?select=matricula,nombre,grupo')
+  ]);
+
+  tpData = (prog||[]).map(p => {
+    const a = (als||[]).find(al => String(al.matricula) === String(p.matricula)) || {};
+    const tot = (p.total_correctas||0) + (p.total_incorrectas||0);
+    const pct = tot > 0 ? Math.round(p.total_correctas/tot*100) : null;
+    return {
+      nombre: a.nombre || p.matricula,
+      grupo: a.grupo || '—',
+      xp: p.xp || 0,
+      rango: p.rango || '—',
+      semanas: (p.bloques_completados||[]).length,
+      correctas: p.total_correctas || 0,
+      pct,
+      ultima: p.ultima_sesion
+    };
+  });
+
+  renderTpStats();
+  renderTpTable(tpData);
+}
+
+function renderTpStats(){
+  const total = tpData.length;
+  const activos = tpData.filter(s => s.xp > 0).length;
+  const avgXP = total ? Math.round(tpData.reduce((a,s) => a+s.xp, 0)/total) : 0;
+  const completos = tpData.filter(s => s.semanas >= 15).length;
+  document.getElementById('tpStats').innerHTML = [
+    ['👥 Alumnos', total, 'var(--cyan)'],
+    ['🟢 Activos', activos, 'var(--cyan)'],
+    ['⚡ XP Promedio', avgXP, 'var(--yellow)'],
+    ['🏆 Completos', completos, 'var(--magenta)']
+  ].map(([lbl, val, col]) =>
+    `<div class="tp-stat"><div class="tp-stat-val" style="color:${col}">${val}</div><div class="tp-stat-lbl">${lbl}</div></div>`
+  ).join('');
+}
+
+function renderTpTable(data){
+  document.getElementById('tpTbody').innerHTML = data.map((s, i) => {
+    const fecha = s.ultima ? new Date(s.ultima).toLocaleDateString('es-MX',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
+    const pctStr = s.pct !== null ? s.pct+'%' : '—';
+    const pctColor = s.pct === null ? 'var(--muted)' : s.pct >= 80 ? 'var(--cyan)' : s.pct >= 60 ? 'var(--yellow)' : 'var(--magenta)';
+    return `<tr>
+      <td style="color:var(--muted)">${i+1}</td>
+      <td style="font-weight:600">${escHtml(s.nombre.split(' ').slice(0,3).join(' '))}</td>
+      <td style="color:var(--muted)">${escHtml(s.grupo)}</td>
+      <td style="color:var(--yellow);font-weight:700">⚡ ${s.xp}</td>
+      <td style="color:var(--purple)">${escHtml(s.rango)}</td>
+      <td>${s.semanas}/15</td>
+      <td>${s.correctas}</td>
+      <td style="color:${pctColor};font-weight:700">${pctStr}</td>
+      <td style="color:var(--muted);font-size:0.78rem;white-space:nowrap">${fecha}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTeacher(){
+  const q = document.getElementById('tpSearch').value.toLowerCase();
+  renderTpTable(tpData.filter(s => s.nombre.toLowerCase().includes(q)));
+}
+
+function teacherLogout(){
+  document.getElementById('teacherPanel').style.display = 'none';
+  const loginEl = document.getElementById('login');
+  loginEl.style.cssText = 'display:flex!important';
+  loginEl.classList.add('active');
+  document.getElementById('pinInput').value = '';
+  document.getElementById('loginBtn').disabled = true;
+  document.getElementById('loginBtn').textContent = 'INGRESAR →';
+}
 </script>
 </body>
 </html>
