@@ -1974,18 +1974,21 @@ function launchConfetti(){
 const SB_URL = 'https://alajpjhhkehhrksawdqb.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFsYWpwamhoa2VoaHJrc2F3ZHFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE3MjQwNjQsImV4cCI6MjA4NzMwMDA2NH0.C55xSZTJ7EQE5NBbf9QopwZo4f44rbh1ZgOcSRdfN2k';
 
-async function sbFetch(path, opts={}){
+let adminAccessToken = null; // token del maestro autenticado
+
+async function sbFetch(path, opts={}, authToken=null){
   try{
     // Put apikey FIRST before any other params
     const hasQ = path.includes('?');
     const base = path.split('?')[0];
     const rest = hasQ ? '&'+path.split('?')[1] : '';
     const url = SB_URL+'/rest/v1/'+base+'?apikey='+SB_KEY+rest;
+    const bearer = authToken || SB_KEY;
     const headers = {
       'Content-Type': 'application/json',
       'Prefer': opts.method==='PATCH'||opts.method==='POST' ? 'return=representation' : (opts.prefer||'return=minimal'),
       'apikey': SB_KEY,
-      'Authorization': 'Bearer '+SB_KEY
+      'Authorization': 'Bearer '+bearer
     };
     const fetchOpts = {...opts, headers};
     delete fetchOpts.prefer;
@@ -2296,22 +2299,37 @@ function toggleLb(){ renderLb(lbCount > 3 ? 3 : 5); }
 /* ══ PANEL MAESTRO ══ */
 let tpData = [];
 
-async function showTeacherPanel(){
+function showTeacherPanel(){
   document.getElementById('login').style.cssText = 'display:none!important';
   document.getElementById('teacherPanel').style.display = 'block';
-  document.getElementById('tpStats').innerHTML = '<div style="color:var(--muted);font-family:\'Share Tech Mono\',monospace;font-size:11px">Cargando datos...</div>';
+  loadTeacherData();
+}
 
+async function loadTeacherData(){
+  document.getElementById('tpStats').innerHTML = '<div style="color:var(--muted);font-family:\'Share Tech Mono\',monospace;font-size:11px;grid-column:1/-1">Cargando datos...</div>';
+  document.getElementById('tpTbody').innerHTML = '';
+
+  const tok = adminAccessToken || null;
   const [prog, als] = await Promise.all([
-    sbFetch('progreso?select=*&order=xp.desc'),
-    sbFetch('"Alumnos"?select=matricula,nombre,grupo')
+    sbFetch('progreso?select=*&order=xp.desc', {}, tok),
+    sbFetch('"Alumnos"?select=matricula,nombre,grupo', {}, tok)
   ]);
 
+  console.log('progreso:', prog, 'alumnos:', als);
+
+  if(!prog){
+    document.getElementById('tpStats').innerHTML =
+      '<div style="color:var(--magenta);font-family:\'Share Tech Mono\',monospace;font-size:11px;grid-column:1/-1">⚠ Sin acceso a datos. Usa el login con correo/contraseña para ver el panel completo.</div>';
+    return;
+  }
+
+  // Cruzar progreso + Alumnos por matrícula
   tpData = (prog||[]).map(p => {
     const a = (als||[]).find(al => String(al.matricula) === String(p.matricula)) || {};
     const tot = (p.total_correctas||0) + (p.total_incorrectas||0);
     const pct = tot > 0 ? Math.round(p.total_correctas/tot*100) : null;
     return {
-      nombre: a.nombre || p.matricula,
+      nombre: a.nombre || String(p.matricula),
       grupo: a.grupo || '—',
       xp: p.xp || 0,
       rango: p.rango || '—',
@@ -2322,6 +2340,16 @@ async function showTeacherPanel(){
       ultima: p.ultima_sesion
     };
   });
+
+  // Si progreso vino vacío pero Alumnos sí tiene datos, mostrar todos los alumnos con 0
+  if(tpData.length === 0 && als && als.length > 0){
+    tpData = (als||[]).map(a => ({
+      nombre: a.nombre || String(a.matricula),
+      grupo: a.grupo || '—',
+      xp: 0, rango: 'Observador/a', semanas: 0,
+      correctas: 0, incorrectas: 0, pct: null, ultima: null
+    }));
+  }
 
   renderTpStats();
   renderTpTable(tpData);
@@ -2425,7 +2453,8 @@ async function adminLogin(){
       btn.disabled=false; btn.textContent='ENTRAR →';
       return;
     }
-    // Autenticado correctamente
+    // Autenticado correctamente — guardar token para queries del panel
+    adminAccessToken = data.access_token;
     closeAdminModal();
     document.getElementById('login').style.cssText='display:none!important';
     document.getElementById('teacherPanel').style.display='block';
