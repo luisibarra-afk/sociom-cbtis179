@@ -668,6 +668,20 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
 .tp-table th{padding:10px 14px;text-align:left;color:var(--muted);font-weight:600;white-space:nowrap;font-family:'Share Tech Mono',monospace;font-size:0.75rem;letter-spacing:.5px}
 .tp-table td{padding:10px 14px;border-top:1px solid rgba(61,0,128,.3)}
 .tp-table tbody tr:hover{background:rgba(0,245,255,.03)}
+.tp-toggle-btn{width:100%;margin-top:4px;padding:8px;background:rgba(0,245,255,.05);border:1px solid rgba(0,245,255,.2);border-radius:10px;color:var(--cyan);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;transition:all .2s}
+/* ── ADMIN MODAL ── */
+.admin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:400;align-items:center;justify-content:center;padding:24px}
+.admin-overlay.open{display:flex}
+.admin-modal{background:var(--card2);border:1px solid var(--border);border-radius:18px;padding:28px 24px;width:100%;max-width:360px;box-shadow:0 0 40px rgba(155,0,255,.3)}
+.admin-title{font-size:1rem;font-weight:800;color:var(--cyan);text-shadow:0 0 8px var(--cyan);margin-bottom:4px}
+.admin-sub{font-size:0.75rem;color:var(--muted);font-family:'Share Tech Mono',monospace;margin-bottom:20px}
+.admin-input{width:100%;padding:11px 14px;background:rgba(22,0,61,.6);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:0.9rem;outline:none;margin-bottom:12px;box-sizing:border-box}
+.admin-input:focus{border-color:var(--cyan)}
+.admin-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--purple),var(--magenta));border:none;border-radius:10px;color:#fff;font-family:'Share Tech Mono',monospace;font-size:0.85rem;letter-spacing:1px;cursor:pointer;margin-top:4px}
+.admin-btn:disabled{opacity:.5;cursor:default}
+.admin-err{font-size:0.8rem;color:var(--magenta);min-height:18px;margin-top:8px;text-align:center}
+.admin-cancel{display:block;text-align:center;margin-top:14px;font-size:0.78rem;color:var(--muted);cursor:pointer;font-family:'Share Tech Mono',monospace}
+.admin-cancel:hover{color:var(--text)}
 </style>
 </head>
 <body>
@@ -715,7 +729,8 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
     <div class="login-hint">Los últimos 4 dígitos de tu número de control<br>Ej. si tu control termina en <strong style="color:var(--cyan)">0012</strong>, escribe <strong style="color:var(--cyan)">0012</strong></div>
     <button class="login-btn" id="loginBtn" onclick="doLogin()" disabled>INGRESAR →</button>
     <div class="login-error" id="loginError"></div>
-    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,230,0,.55);text-align:center;margin-top:16px;letter-spacing:1px;border-top:1px solid rgba(255,230,0,.1);padding-top:12px;">© 2026 Luis Eduardo Ibarra Hernández · CBTis 179 · DGETI</div>
+    <button onclick="showAdminModal()" style="display:block;width:100%;margin-top:14px;padding:8px;background:transparent;border:1px dashed rgba(155,0,255,.3);border-radius:8px;color:rgba(155,0,255,.7);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer">🎓 ACCESO MAESTRO</button>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,230,0,.55);text-align:center;margin-top:12px;letter-spacing:1px;border-top:1px solid rgba(255,230,0,.1);padding-top:12px;">© 2026 Luis Eduardo Ibarra Hernández · CBTis 179 · DGETI</div>
     
   </div>
   <div class="login-footer">Tu progreso se guarda en la nube — accede desde cualquier dispositivo con tu PIN</div>
@@ -780,6 +795,20 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
   </nav>
 </div>
 
+<!-- ══ ADMIN MODAL ══ -->
+<div class="admin-overlay" id="adminOverlay" onclick="if(event.target===this)closeAdminModal()">
+  <div class="admin-modal">
+    <div style="font-size:1.6rem;text-align:center;margin-bottom:10px">🎓</div>
+    <div class="admin-title" style="text-align:center">Acceso Maestro</div>
+    <div class="admin-sub" style="text-align:center">SocioMente · CBTis 179</div>
+    <input class="admin-input" id="adminEmail" type="email" placeholder="Correo institucional" autocomplete="email" onkeydown="if(event.key==='Enter')document.getElementById('adminPass').focus()">
+    <input class="admin-input" id="adminPass" type="password" placeholder="Contraseña" autocomplete="current-password" onkeydown="if(event.key==='Enter')adminLogin()">
+    <button class="admin-btn" id="adminBtn" onclick="adminLogin()">ENTRAR →</button>
+    <div class="admin-err" id="adminErr"></div>
+    <span class="admin-cancel" onclick="closeAdminModal()">Cancelar</span>
+  </div>
+</div>
+
 <!-- ══ TEACHER PANEL ══ -->
 <div id="teacherPanel">
   <div class="tp-header">
@@ -788,7 +817,10 @@ canvas#conf{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:no
       <div style="font-weight:800;font-size:1rem;color:var(--cyan);text-shadow:0 0 8px var(--cyan)">Panel Maestro — SocioMente</div>
       <div style="font-size:0.75rem;color:var(--muted);font-family:'Share Tech Mono',monospace">CBTis 179 · Ciencias Sociales II</div>
     </div>
-    <button onclick="teacherLogout()" style="margin-left:auto;background:rgba(155,0,255,.2);border:1px solid rgba(155,0,255,.4);color:var(--text);padding:7px 14px;border-radius:8px;font-size:0.82rem;cursor:pointer">Salir</button>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button onclick="exportCSV()" style="background:rgba(0,245,255,.1);border:1px solid rgba(0,245,255,.3);color:var(--cyan);padding:7px 14px;border-radius:8px;font-size:0.82rem;cursor:pointer;font-family:'Share Tech Mono',monospace">⬇ CSV</button>
+      <button onclick="teacherLogout()" style="background:rgba(155,0,255,.2);border:1px solid rgba(155,0,255,.4);color:var(--text);padding:7px 14px;border-radius:8px;font-size:0.82rem;cursor:pointer">Salir</button>
+    </div>
   </div>
   <div style="padding:20px;max-width:1100px;margin:0 auto">
     <div class="tp-stat-grid" id="tpStats"></div>
@@ -2285,6 +2317,7 @@ async function showTeacherPanel(){
       rango: p.rango || '—',
       semanas: (p.bloques_completados||[]).length,
       correctas: p.total_correctas || 0,
+      incorrectas: p.total_incorrectas || 0,
       pct,
       ultima: p.ultima_sesion
     };
@@ -2331,6 +2364,76 @@ function renderTpTable(data){
 function filterTeacher(){
   const q = document.getElementById('tpSearch').value.toLowerCase();
   renderTpTable(tpData.filter(s => s.nombre.toLowerCase().includes(q)));
+}
+
+function exportCSV(){
+  if(!tpData.length){ alert('No hay datos para exportar.'); return; }
+  const cols = ['#','Nombre','Grupo','XP','Rango','Semanas completadas','Correctas','Incorrectas','% Aciertos','Última sesión'];
+  const rows = tpData.map((s, i) => [
+    i+1,
+    s.nombre,
+    s.grupo,
+    s.xp,
+    s.rango,
+    s.semanas,
+    s.correctas,
+    s.incorrectas,
+    s.pct !== null ? s.pct+'%' : '',
+    s.ultima ? new Date(s.ultima).toLocaleString('es-MX') : ''
+  ]);
+  const csvStr = [cols, ...rows]
+    .map(r => r.map(v => '"'+String(v??'').replace(/"/g,'""')+'"').join(','))
+    .join('\n');
+  const blob = new Blob(['\ufeff'+csvStr], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'sociom_progreso_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+function showAdminModal(){
+  document.getElementById('adminEmail').value='';
+  document.getElementById('adminPass').value='';
+  document.getElementById('adminErr').textContent='';
+  document.getElementById('adminBtn').disabled=false;
+  document.getElementById('adminBtn').textContent='ENTRAR →';
+  document.getElementById('adminOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('adminEmail').focus(),100);
+}
+
+function closeAdminModal(){
+  document.getElementById('adminOverlay').classList.remove('open');
+}
+
+async function adminLogin(){
+  const email = document.getElementById('adminEmail').value.trim();
+  const pass  = document.getElementById('adminPass').value;
+  const errEl = document.getElementById('adminErr');
+  const btn   = document.getElementById('adminBtn');
+  errEl.textContent='';
+  if(!email||!pass){ errEl.textContent='⚠ Completa los campos'; return; }
+  btn.disabled=true; btn.textContent='Verificando...';
+  try{
+    const res = await fetch(SB_URL+'/auth/v1/token?grant_type=password',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SB_KEY},
+      body: JSON.stringify({email, password:pass})
+    });
+    const data = await res.json();
+    if(!res.ok){
+      errEl.textContent='⚠ '+(data.error_description||data.msg||'Credenciales incorrectas');
+      btn.disabled=false; btn.textContent='ENTRAR →';
+      return;
+    }
+    // Autenticado correctamente
+    closeAdminModal();
+    document.getElementById('login').style.cssText='display:none!important';
+    document.getElementById('teacherPanel').style.display='block';
+    await loadTeacherData();
+  }catch(e){
+    errEl.textContent='⚠ Error de conexión';
+    btn.disabled=false; btn.textContent='ENTRAR →';
+  }
 }
 
 function teacherLogout(){
