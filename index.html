@@ -2093,6 +2093,8 @@ async function guardarProgreso(){
     console.log('✅ Progreso guardado: XP='+STATE.xp+' Bloques='+JSON.stringify(STATE.blocksCompleted));
   } catch(e){
     console.warn('⚠️ Error guardando progreso:', e);
+    const t = document.getElementById('xpToast');
+    if(t){ t.textContent='⚠ Sin conexión — progreso guardado localmente'; t.classList.remove('pop');void t.offsetWidth;t.classList.add('pop'); }
   }
   saveState();
 }
@@ -2180,9 +2182,10 @@ function doLogin(){
   const mat = PREFIJO + pin;
   STATE.matricula = mat;
   // Buscar alumno en Supabase
+  const btn2 = document.getElementById('loginBtn');
   btn2.disabled=true; btn2.textContent='Verificando...';
   const err2 = document.getElementById('loginError');
-  
+
   buscarAlumno(mat).then(alumno => {
     if(!alumno){
       err2.textContent='⚠ Número de control no encontrado';
@@ -2194,17 +2197,17 @@ function doLogin(){
     STATE.nombre = alumno.nombre;
     STATE.grupo = alumno.grupo;
     document.getElementById('userChip').textContent='👤 '+alumno.nombre.split(' ')[0];
-    
+
     // Cargar progreso de Supabase
     cargarProgreso(mat).then(returning => {
       // También intentar local como respaldo
       if(!returning) loadState(mat);
-      
+
       showScreen('home');
       document.getElementById('login').classList.remove('active');
       renderHome();
       loadLeaderboard();
-      
+
       const t = document.getElementById('xpToast');
       if(returning){
         t.textContent = '¡Bienvenido/a, '+alumno.nombre.split(' ')[0]+'! 🦉';
@@ -2213,10 +2216,14 @@ function doLogin(){
       }
       t.classList.remove('pop');void t.offsetWidth;t.classList.add('pop');
       setTimeout(()=>{ t.textContent='+10 XP ⚡'; },3000);
-      
+
       guardarProgreso();
       btn2.disabled=false; btn2.textContent='INGRESAR →';
     });
+  }).catch(() => {
+    err2.textContent='⚠ Sin conexión. Verifica tu internet e intenta de nuevo.';
+    btn2.disabled=false; btn2.textContent='INGRESAR →';
+    STATE.matricula='';
   });
 }
 
