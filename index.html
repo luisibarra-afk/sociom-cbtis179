@@ -1884,6 +1884,10 @@ function pick(idx){
     document.getElementById('o'+idx).classList.add('wrong');
     document.getElementById('o'+q.correct).classList.add('correct');
     STATE.totalWrong++;sndWrong();
+    if(STATE.xp > 5){ STATE.xp-=5; xpE=Math.max(0,xpE-5); }
+    else STATE.xp=0;
+    document.getElementById('hXP').textContent=STATE.xp;
+    const tw=document.getElementById('xpToast');tw.textContent='-5 XP ❌';tw.classList.remove('pop');void tw.offsetWidth;tw.classList.add('pop');
     document.getElementById('fbMascot').textContent='😔';
     document.getElementById('fbTitle').textContent='Casi... 💡';
     document.getElementById('fbExpl').textContent=q.explain;
@@ -1917,9 +1921,14 @@ function showComplete(){
   sndDone();
   if(!STATE.blocksCompleted.includes(cB.semana)){
     STATE.blocksCompleted.push(cB.semana);
+    const perfect = correct === cB.preguntas.length;
+    if(perfect){ xpE+=30; }
     STATE.xp+=xpE;
     saveState(); // guardar local inmediatamente
     setTimeout(guardarProgreso, 300); // guardar en nube
+    if(perfect) setTimeout(()=>{
+      const t=document.getElementById('xpToast');t.textContent='¡Perfecto! +30 XP BONUS ⭐';t.classList.remove('pop');void t.offsetWidth;t.classList.add('pop');
+    }, 800);
   }
   document.getElementById('hXP').textContent=STATE.xp;
   document.getElementById('hStr').textContent=STATE.streak;
@@ -2299,7 +2308,7 @@ let lbData = [];
 let lbCount = 3;
 
 async function loadLeaderboard(){
-  const prog = await sbFetch('progreso?select=matricula,xp,rango&order=xp.desc&limit=5');
+  const prog = await sbFetch('progreso?select=matricula,xp,rango,total_correctas,total_incorrectas&order=xp.desc&limit=10');
   if(!prog || !prog.length) return;
 
   const mats = prog.map(p => p.matricula).join(',');
@@ -2307,8 +2316,10 @@ async function loadLeaderboard(){
 
   lbData = prog.map(p => {
     const a = (als||[]).find(al => String(al.matricula) === String(p.matricula)) || {};
-    return { matricula: p.matricula, nombre: a.nombre || '—', xp: p.xp||0, rango: p.rango||'' };
-  });
+    const total = (p.total_correctas||0) + (p.total_incorrectas||0);
+    const pct = total > 0 ? Math.round((p.total_correctas||0) / total * 100) : 0;
+    return { matricula: p.matricula, nombre: a.nombre || '—', xp: p.xp||0, rango: p.rango||'', pct };
+  }).sort((a,b) => b.xp - a.xp || b.pct - a.pct);
 
   if(!lbData.length) return;
   document.getElementById('lbSection').style.display = 'block';
@@ -2327,7 +2338,7 @@ function renderLb(n){
     return `<div class="lb-row${isMe?' me':''}">
       <span class="lb-medal">${medals[i]||(i+1)}</span>
       <span class="lb-name">${name}${isMe?' <span style="font-size:10px;opacity:.8">(tú)</span>':''}</span>
-      <span class="lb-xp">⚡ ${s.xp} XP</span>
+      <span class="lb-xp">⚡ ${s.xp} XP · ${s.pct}%</span>
     </div>`;
   }).join('');
 
