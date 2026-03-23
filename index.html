@@ -917,7 +917,7 @@ function sndDone(){[392,494,587,659,784].forEach((f,i)=>pt(f,'triangle',.3,.22,i
 const STATE = {
   xp: 0, nombre:'', grupo:'', blocksCompleted: [],
   totalCorrect: 0, totalWrong: 0,
-  badges: { necesidades:false, organizacion:false, produccion:false, dgeti:false }
+  badges: { necesidades:false, organizacion:false, produccion:false, dgeti:false, maestro:false }
 };
 
 /* ══ 4 INSIGNIAS ══ */
@@ -926,6 +926,7 @@ const BADGES = [
   { id:'organizacion', ico:'🏘️', name:'Tejedor/a Social', desc:'Terminaste el Tema 2: Organización Social. ¡Sabes identificar discriminación y resistencia!', color:'#7c3aed', unlocksAfterBlock:8 },
   { id:'produccion', ico:'⚙️', name:'Factor Clave', desc:'Completaste el Tema 3: Factores de Producción. ¡Entiendes cómo se distribuye la riqueza!', color:'#d97706', unlocksAfterBlock:12 },
   { id:'dgeti', ico:'🎓', name:'Orgullo DGETI', desc:'¡Completaste las 15 semanas de Ciencias Sociales II! Eres un bachiller tecnológico con pensamiento crítico. ¡Orgullo CBT-DGETI!', color:'#ffc800', unlocksAfterBlock:15 },
+  { id:'maestro', ico:'🌟', name:'Mente Maestra', desc:'Has respondido cada pregunta correctamente en las 15 semanas. No solo aprendiste — comprendiste. Eres de los pocos que ven la desigualdad con claridad total.', color:'#ffffff', secret:true },
 ];
 
 /* ══ TEMAS ══ */
@@ -1658,6 +1659,12 @@ function nextBlock(){
 function renderBadges(){
   document.getElementById('badgesRow').innerHTML=BADGES.map(b=>{
     const earned=STATE.badges[b.id];
+    if(b.secret && !earned) return `
+      <div class="badge-big" onclick="sndClick();showBD('${b.id}')" style="opacity:.5;filter:grayscale(1)">
+        <span class="badge-big-ico">❓</span>
+        <div class="badge-big-name">???</div>
+        <div class="badge-big-lock">SECRETA</div>
+      </div>`;
     return `
       <div class="badge-big ${earned?'earned':''}" onclick="sndClick();showBD('${b.id}')">
         <span class="badge-big-ico">${earned?b.ico:'🔒'}</span>
@@ -1670,9 +1677,9 @@ function renderBadges(){
 function showBD(id){
   const b=BADGES.find(x=>x.id===id);if(!b)return;
   const earned=STATE.badges[b.id];
-  document.getElementById('bIco').textContent=earned?b.ico:'🔒';
-  document.getElementById('bName').textContent=b.name;
-  document.getElementById('bDesc').textContent=earned?b.desc:'Completa los bloques para desbloquear esta insignia.';
+  document.getElementById('bIco').textContent=earned?b.ico:(b.secret?'❓':'🔒');
+  document.getElementById('bName').textContent=earned?b.name:(b.secret?'Insignia secreta':'???');
+  document.getElementById('bDesc').textContent=earned?b.desc:(b.secret?'Nadie sabe cómo se consigue... o sí?':'Completa los bloques para desbloquear esta insignia.');
   document.getElementById('badgeOverlay').classList.add('show');
 }
 function closeBadge(){
@@ -1929,6 +1936,10 @@ function showComplete(){
     if(perfect) setTimeout(()=>{
       const t=document.getElementById('xpToast');t.textContent='¡Perfecto! +30 XP BONUS ⭐';t.classList.remove('pop');void t.offsetWidth;t.classList.add('pop');
     }, 800);
+    // Insignia secreta: 15 lecciones completas con 0 errores en total
+    if(STATE.blocksCompleted.length===15 && STATE.totalWrong===0 && !STATE.badges.maestro){
+      setTimeout(()=>unlockBadge('maestro'), 1500);
+    }
   }
   document.getElementById('hXP').textContent=STATE.xp;
   document.getElementById('hStr').textContent=STATE.streak;
@@ -2128,7 +2139,7 @@ async function cargarProgreso(matricula){
     // No hay progreso en Supabase — limpiar localStorage para este usuario
     try{ localStorage.removeItem(STORAGE_KEY+matricula); }catch(e){}
     STATE.xp=0; STATE.blocksCompleted=[]; STATE.totalCorrect=0; STATE.totalWrong=0;
-    STATE.badges={necesidades:false,organizacion:false,produccion:false,dgeti:false};
+    STATE.badges={necesidades:false,organizacion:false,produccion:false,dgeti:false,maestro:false};
     return false;
   }
 }
@@ -2142,7 +2153,6 @@ function saveState(){
     if(!mat) return;
     localStorage.setItem(STORAGE_KEY+mat, JSON.stringify({
       xp: STATE.xp,
-
       blocksCompleted: STATE.blocksCompleted,
       totalCorrect: STATE.totalCorrect,
       totalWrong: STATE.totalWrong,
@@ -2162,7 +2172,7 @@ function loadState(mat){
     STATE.blocksCompleted = saved.blocksCompleted||[];
     STATE.totalCorrect = saved.totalCorrect||0;
     STATE.totalWrong = saved.totalWrong||0;
-    STATE.badges = saved.badges||{necesidades:false,organizacion:false,produccion:false,dgeti:false};
+    STATE.badges = saved.badges||{necesidades:false,organizacion:false,produccion:false,dgeti:false,maestro:false};
     return true;
   }catch(e){return false;}
 }
