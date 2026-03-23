@@ -2175,13 +2175,6 @@ function doLogin(){
     err.textContent='⚠ Ingresa tus 4 dígitos';
     return;
   }
-  // Acceso maestro
-  const btn2 = document.getElementById('loginBtn');
-  if(pin === '1179'){
-    btn2.disabled=false; btn2.textContent='INGRESAR →';
-    showTeacherPanel();
-    return;
-  }
   // Reconstruir matrícula completa: prefijo fijo + pin
   const PREFIJO = '2531305179';
   const mat = PREFIJO + pin;
