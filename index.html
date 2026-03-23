@@ -2356,7 +2356,7 @@ function renderLb(n){
 
   list.innerHTML = lbData.slice(0, n).map((s, i) => {
     const isMe = s.matricula === STATE.matricula;
-    const name = escHtml((s.nombre||'').split(' ').slice(0,2).join(' '));
+    const name = escHtml(s.nombre||'');
     return `<div class="lb-row${isMe?' me':''}">
       <span class="lb-medal">${medals[i]||(i+1)}</span>
       <span class="lb-name">${name}${isMe?' <span style="font-size:10px;opacity:.8">(tú)</span>':''}</span>
